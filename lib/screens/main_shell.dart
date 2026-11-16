@@ -197,7 +197,7 @@ class _MainShellState extends ConsumerState<MainShell>
           tab,
           mornye: mornye,
           showStore: showStore,
-          desktop: isDesktopPlatform || isAndroidTv,
+          desktop: isDesktopUi || isAndroidTv,
         ) ??
         0;
     if (index == _currentIndex) return;
@@ -466,14 +466,14 @@ class _MainShellState extends ConsumerState<MainShell>
   /// Desktop and TV show Settings after Search in the content pane.
   /// Phones and tablets open it as a page instead.
   bool get _mornyeSettingsTab =>
-      context.isMornye && (isDesktopPlatform || isAndroidTv);
+      context.isMornye && (isDesktopUi || isAndroidTv);
 
   int _settingsIndex(bool showStore) =>
       context.isMornye ? (showStore ? 4 : 3) : (showStore ? 3 : 2);
 
   void _onShellTabRequested(ShellTab tab) {
     // Picking a destination returns from Now Playing to the content pane.
-    if (isDesktopPlatform) desktopNowPlayingOpen.value = false;
+    if (isDesktopUi) desktopNowPlayingOpen.value = false;
     if (tab == ShellTab.settings && context.isMornye && !_mornyeSettingsTab) {
       unawaited(_openProfileSettings());
       return;
@@ -581,7 +581,7 @@ class _MainShellState extends ConsumerState<MainShell>
 
   /// Whether scrolling may collapse the Mornye tab bar at [width].
   bool _canMinimizeChromeAt(double width, TextScaler textScaler) =>
-      !isDesktopPlatform &&
+      !isDesktopUi &&
       context.isMornye &&
       !useNavigationRailForWidth(width) &&
       textScaler.scale(15) <= 20;
@@ -962,7 +962,7 @@ class _MainShellState extends ConsumerState<MainShell>
         navigatorKey: _libraryTabNavigatorKey,
         observers: [
           _libraryPreviewStopObserver,
-          if (isDesktopPlatform) _libraryDepthObserver,
+          if (isDesktopUi) _libraryDepthObserver,
         ],
         heroAnimationsEnabled: heroAnimationsEnabled,
         child: _LibraryTabRoot(isTabActive: _currentIndex == 1),
@@ -1084,7 +1084,7 @@ class _MainShellState extends ConsumerState<MainShell>
       );
     }
 
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       // Desktop windows: a rail (Material) or source-list sidebar (Mornye)
       // with a persistent player; no bottom tabs or touch gestures.
       final mornye = context.isMornye;
@@ -1461,7 +1461,7 @@ class _TabNavigatorState extends State<_TabNavigator> {
       observers: [
         _chromeObserver,
         if (widget.heroAnimationsEnabled) _heroController,
-        if (isDesktopPlatform) _nowPlayingCloser,
+        if (isDesktopUi) _nowPlayingCloser,
         ...widget.observers,
       ],
       onGenerateInitialRoutes: (_, _) => [

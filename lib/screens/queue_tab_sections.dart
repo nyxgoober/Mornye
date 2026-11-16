@@ -193,7 +193,7 @@ extension _QueueTabSections on _QueueTabState {
   /// The sort modes as a checked menu below the sort button, on desktop.
   /// [anchor] is the button when [context] is not.
   bool _showSortMenu(BuildContext context, {BuildContext? anchor}) {
-    final position = isDesktopPlatform
+    final position = isDesktopUi
         ? contextMenuPositionBelow(anchor ?? context)
         : null;
     if (position == null) return false;

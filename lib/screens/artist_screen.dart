@@ -677,7 +677,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen>
                   // Desktop keeps the sections in the header's column.
                   SliverPadding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: isDesktopPlatform
+                      horizontal: isDesktopUi
                           ? wideListInset(context)
                           : 0,
                     ),
@@ -687,7 +687,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen>
                           SliverToBoxAdapter(
                             child: ArtistScreenSkeleton(
                               showCoverHeader:
-                                  !isDesktopPlatform &&
+                                  !isDesktopUi &&
                                   !context.isMornye &&
                                   (_headerImageUrl ??
                                           widget.headerImageUrl ??
@@ -711,7 +711,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen>
                             ),
                           ),
                         if (!_isLoadingDiscography && _error == null) ...[
-                          if (isDesktopPlatform && context.isMornye)
+                          if (isDesktopUi && context.isMornye)
                             if (albums.isNotEmpty ||
                                 (_topTracks?.isNotEmpty ?? false))
                               SliverToBoxAdapter(
@@ -812,7 +812,7 @@ class _ArtistScreenState extends ConsumerState<ArtistScreen>
                     child: SizedBox(
                       height: isSelectionMode
                           ? 120
-                          : isDesktopPlatform
+                          : isDesktopUi
                           ? desktopDetailBottomInset
                           : 32,
                     ),

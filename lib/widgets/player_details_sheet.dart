@@ -46,7 +46,7 @@ Future<void> showPlayerDetailsSheet(
     );
   }
   // The Mornye details draw their own glass, handle and header.
-  if (isDesktopPlatform) {
+  if (isDesktopUi) {
     return showAppSheetDialog<void>(
       context: context,
       isScrollControlled: true,

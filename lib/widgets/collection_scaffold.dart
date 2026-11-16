@@ -116,7 +116,7 @@ class _CollectionScaffoldState extends State<CollectionScaffold> {
                 height: widget.isSelectionMode
                     ? _selectionBarHeight
                     // Desktop pages scroll under the floating player.
-                    : isDesktopPlatform
+                    : isDesktopUi
                     ? desktopDetailBottomInset
                     : 32,
               ),

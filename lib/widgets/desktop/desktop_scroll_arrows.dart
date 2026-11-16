@@ -62,7 +62,7 @@ class _DesktopScrollArrowsState extends State<DesktopScrollArrows> {
   @override
   Widget build(BuildContext context) {
     final list = widget.builder(context, _controller);
-    if (!isDesktopPlatform) return list;
+    if (!isDesktopUi) return list;
     return MouseRegion(
       onEnter: (_) => _hovered.value = true,
       onExit: (_) => _hovered.value = false,

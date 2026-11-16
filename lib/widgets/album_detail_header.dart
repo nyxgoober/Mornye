@@ -121,7 +121,7 @@ class AlbumDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktopPlatform ||
+    if (isDesktopUi ||
         (context.isMornye && (coverBuilder != null || immersive))) {
       final scheme = Theme.of(context).colorScheme;
       return HeaderPalette(
@@ -141,7 +141,7 @@ class AlbumDetailHeader extends StatelessWidget {
   /// Keep the toolbar at the collection scroll-view level so it stays pinned
   /// after the dynamically sized artwork and metadata have scrolled away.
   List<Widget> buildSlivers(BuildContext context) {
-    if (isDesktopPlatform) return _buildDesktopSlivers(context);
+    if (isDesktopUi) return _buildDesktopSlivers(context);
     if (!context.isMornye || (coverBuilder == null && !immersive)) {
       return [this];
     }
@@ -704,7 +704,7 @@ class AlbumPlayActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final scheme = HeaderPalette.of(context);
-    if (isDesktopPlatform) return _buildDesktop(context, scheme);
+    if (isDesktopUi) return _buildDesktop(context, scheme);
     if (context.isMornye) {
       return Row(
         children: [
@@ -922,7 +922,7 @@ class HeaderCircleButton extends ConsumerWidget {
     final tokens = context.tokens;
     final scheme = HeaderPalette.of(context);
     // Desktop headers use pointer-sized controls.
-    final desktop = isDesktopPlatform;
+    final desktop = isDesktopUi;
     // Tonal circles stay level with the action pills beside them.
     final toolbarGlass = context.isMornye && !tonal;
     final buttonSize =
@@ -1058,7 +1058,7 @@ class _MornyeHeaderButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = HeaderPalette.of(context);
     // Desktop action pills use a compact, neutral fill.
-    final desktop = isDesktopPlatform;
+    final desktop = isDesktopUi;
     final filled = prominent && !desktop;
     final foreground = onPressed == null
         ? scheme.onSurfaceVariant
@@ -1137,7 +1137,7 @@ class HeaderMetaRow extends StatelessWidget {
     }
 
     return Wrap(
-      alignment: isDesktopPlatform ? WrapAlignment.start : WrapAlignment.center,
+      alignment: isDesktopUi ? WrapAlignment.start : WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       runSpacing: 4,
       children: parts,
@@ -1155,7 +1155,7 @@ class HeaderMetaItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = HeaderPalette.of(context);
-    final desktop = isDesktopPlatform;
+    final desktop = isDesktopUi;
     final textStyle = TextStyle(
       color: context.isMornye || desktop
           ? scheme.onSurfaceVariant

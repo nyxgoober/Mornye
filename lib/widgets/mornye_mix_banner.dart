@@ -128,7 +128,7 @@ class MornyeMixBanner extends StatelessWidget {
     final pixelRatio = MediaQuery.devicePixelRatioOf(context);
     final logoWidth = width * 0.3;
     // Pointer layouts use a compact caption.
-    final captionSize = isDesktopPlatform ? 12.0 : null;
+    final captionSize = isDesktopUi ? 12.0 : null;
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: SizedBox(

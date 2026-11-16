@@ -885,7 +885,7 @@ extension _HomeTabSearchResultsUI on _HomeTabState {
     final chipRow = LiquidGlassBatch(
       // A mouse cannot swipe a clipped row, so desktop windows wrap every
       // filter onto view.
-      child: isDesktopPlatform
+      child: isDesktopUi
           ? Wrap(spacing: 8, runSpacing: 8, children: chips)
           : SingleChildScrollView(
               scrollDirection: Axis.horizontal,

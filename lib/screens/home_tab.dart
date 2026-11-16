@@ -150,14 +150,14 @@ class _HomeTabState extends ConsumerState<HomeTab>
   bool get _offersLibraryScope =>
       widget.mode == HomeTabMode.search &&
       context.isMornye &&
-      isDesktopPlatform;
+      isDesktopUi;
   bool _searchesLibrary = false;
   String _libraryQuery = '';
   Timer? _libraryQueryDebounce;
   bool get _searchingLibrary => _searchesLibrary && _offersLibraryScope;
 
   /// Mornye's desktop field uses the compact toolbar size.
-  bool get _compactSearchField => context.isMornye && isDesktopPlatform;
+  bool get _compactSearchField => context.isMornye && isDesktopUi;
 
   bool _embeddedCoverRefreshScheduled = false;
   List<Extension>? _thumbnailSizesExtensionsCache;
@@ -1188,7 +1188,7 @@ class _HomeTabState extends ConsumerState<HomeTab>
           ? context.l10n.mornyeSearch
           : greeting ?? context.l10n.homeTitle,
       // The desktop sidebar's account row already opens the profile.
-      actions: context.isMornye && _showsHome && !isDesktopPlatform
+      actions: context.isMornye && _showsHome && !isDesktopUi
           ? const [HomeProfileButton()]
           : null,
     );
@@ -1281,7 +1281,7 @@ class _HomeTabState extends ConsumerState<HomeTab>
           );
           // Section headers are shortcuts; the compact filter menu keeps
           // every extension-declared filter reachable, even without results.
-          final noChips = wide && isDesktopPlatform && context.isMornye;
+          final noChips = wide && isDesktopUi && context.isMornye;
           final showBack = noChips && displayFilter != 'all';
           if (!showTools && !showBack && searchFilters.isEmpty) {
             return const SliverToBoxAdapter(child: SizedBox.shrink());
@@ -1428,7 +1428,7 @@ class _HomeTabState extends ConsumerState<HomeTab>
     // Phones keep their rows in landscape too. Read here, since the select
     // below runs during layout.
     final coverLayoutAllowed =
-        isDesktopPlatform || MediaQuery.sizeOf(context).shortestSide >= 600;
+        isDesktopUi || MediaQuery.sizeOf(context).shortestSide >= 600;
     final inset = homeContentInset(context);
     // Rebuilds only when the layout crosses the breakpoint, not on every
     // scroll frame.

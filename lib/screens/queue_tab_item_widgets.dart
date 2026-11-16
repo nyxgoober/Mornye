@@ -394,7 +394,7 @@ extension _QueueTabItemWidgets on _QueueTabState {
     Offset? position,
   }) {
     final notifier = ref.read(downloadQueueProvider.notifier);
-    if (position != null && isDesktopPlatform) {
+    if (position != null && isDesktopUi) {
       return showContextMenu(
         context,
         position: position,
@@ -1185,7 +1185,7 @@ extension _QueueTabItemWidgets on _QueueTabState {
       isCurrent: current,
       isPlaying: playing,
       leadingArtwork: true,
-      onTap: isDesktopPlatform
+      onTap: isDesktopUi
           ? () => _desktopLibraryItemClick(item, libraryItems, open)
           : _isSelectionMode
           ? () => _toggleSelection(item.id)
@@ -1259,7 +1259,7 @@ extension _QueueTabItemWidgets on _QueueTabState {
         item.trackName,
         item.artistName,
       ),
-      onTap: isDesktopPlatform
+      onTap: isDesktopUi
           ? () => _desktopLibraryItemClick(item, libraryItems, open)
           : _isSelectionMode
           ? () => _toggleSelection(item.id)
@@ -1310,7 +1310,7 @@ extension _QueueTabItemWidgets on _QueueTabState {
             ),
           ),
         // A desktop click selects, so the play button stays during selection.
-        if (!_isSelectionMode || isDesktopPlatform)
+        if (!_isSelectionMode || isDesktopUi)
           PositionedDirectional(
             end: 4,
             bottom: 4,

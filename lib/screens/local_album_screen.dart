@@ -425,7 +425,7 @@ class _LocalAlbumScreenState extends ConsumerState<LocalAlbumScreen>
       subtitle: Builder(
         builder: (header) => Text(
           widget.artistName,
-          style: isDesktopPlatform
+          style: isDesktopUi
               ? desktopDetailSubtitleStyle(header)
               : TextStyle(
                   color: context.isMornye
@@ -559,7 +559,7 @@ class _LocalAlbumScreenState extends ConsumerState<LocalAlbumScreen>
     ColorScheme colorScheme,
     List<LocalLibraryItem> tracks,
   ) {
-    if (isDesktopPlatform) return _buildDesktopTable(context, tracks);
+    if (isDesktopUi) return _buildDesktopTable(context, tracks);
     final discGroups = _discGroupsCache;
     final hasMultipleDiscs = _hasMultipleDiscsCache;
 

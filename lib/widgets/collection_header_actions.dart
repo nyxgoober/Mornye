@@ -69,7 +69,7 @@ class CollectionHeaderActions extends StatelessWidget {
       tooltip: context.l10n.tooltipAddToPlaylist,
       onPressed: enabled ? onAddToPlaylist : null,
     );
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 10,

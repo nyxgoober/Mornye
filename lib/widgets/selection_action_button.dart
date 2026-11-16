@@ -13,7 +13,7 @@ class SelectionActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       // A toolbar row: each action keeps its own width and wraps when the
       // panel is narrow, instead of equal touch-sized cells.
       return Wrap(spacing: 8, runSpacing: 8, children: children);
@@ -72,7 +72,7 @@ class SelectionActionButton extends StatelessWidget {
     }
     // Desktop: the M3 Expressive small button (40dp) on one line, since the
     // pointer needs no 48dp target and the toolbar lays actions in a row.
-    final compact = isDesktopPlatform;
+    final compact = isDesktopUi;
     return Semantics(
       button: true,
       enabled: onPressed != null,

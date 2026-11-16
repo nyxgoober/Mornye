@@ -278,7 +278,7 @@ extension _QueueTabFilterWidgets on _QueueTabState {
     Widget leadListCell(int index) {
       // Sectioned lists and desktop tables keep the active downloads as
       // their own run.
-      final runLength = isDesktopPlatform || (rootLibrary && !context.isMornye)
+      final runLength = isDesktopUi || (rootLibrary && !context.isMornye)
           ? leadCount
           : leadCount + filteredUnifiedItems.length;
       if (index < activeDownloadIds.length) {
@@ -611,7 +611,7 @@ extension _QueueTabFilterWidgets on _QueueTabState {
                 ),
               ),
             )
-          else if (isDesktopPlatform &&
+          else if (isDesktopUi &&
               (filteredUnifiedItems.isNotEmpty ||
                   leadCount > 0 ||
                   collectionCount > 0))

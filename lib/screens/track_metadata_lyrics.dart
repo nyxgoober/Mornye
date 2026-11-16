@@ -119,7 +119,7 @@ extension _TrackMetadataLyricsAndSaving on _TrackMetadataScreenState {
                       fadeContent: true,
                       child: Scrollbar(
                         controller: _lyricsScrollController,
-                        thumbVisibility: isDesktopPlatform,
+                        thumbVisibility: isDesktopUi,
                         child: SingleChildScrollView(
                           controller: _lyricsScrollController,
                           child: Text(

@@ -707,7 +707,7 @@ class _SearchSongCoverCell extends ConsumerWidget {
       ),
     );
 
-    final desktopMaterial = isDesktopPlatform && !mornye;
+    final desktopMaterial = isDesktopUi && !mornye;
     return DesktopContextMenuRegion(
       onContextMenu: (position) => showOptions(position: position),
       child: Material(
@@ -858,7 +858,7 @@ class _SearchCoverCell extends StatelessWidget {
     );
 
     final textAlign = isArtist ? TextAlign.center : TextAlign.start;
-    final desktopMaterial = isDesktopPlatform && !mornye;
+    final desktopMaterial = isDesktopUi && !mornye;
     return DesktopContextMenuRegion(
       onContextMenu: (position) => showContextMenu(
         context,

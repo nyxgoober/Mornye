@@ -231,7 +231,7 @@ extension _TrackMetadataMenu on _TrackMetadataScreenState {
     ColorScheme colorScheme, {
     Rect? anchor,
   }) {
-    if (isDesktopPlatform && !screenContext.isMornye) {
+    if (isDesktopUi && !screenContext.isMornye) {
       _showDesktopOptionsMenu(screenContext, ref, colorScheme, anchor: anchor);
       return;
     }

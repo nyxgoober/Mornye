@@ -27,7 +27,7 @@ class AppSheetHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     // Desktop shows sheets as dialogs, which nothing drags.
-    if (isDesktopPlatform) return SizedBox(height: tokens.gapMd);
+    if (isDesktopUi) return SizedBox(height: tokens.gapMd);
     return ExcludeSemantics(
       child: Center(
         child: Container(
@@ -85,7 +85,7 @@ class AppBottomSheet extends StatelessWidget {
     // Material desktop dialogs end their header with a close button for the
     // pointer; Esc and a click outside close them too.
     final closes =
-        titleTrailing == null && isDesktopPlatform && !context.isMornye;
+        titleTrailing == null && isDesktopUi && !context.isMornye;
     final trailing = closes ? const _SheetDialogCloseButton() : titleTrailing;
 
     Widget content = Column(
@@ -395,7 +395,7 @@ Future<T?> showAppModalBottomSheet<T>({
   Color? backgroundColor,
   AppDialogSize dialogSize = AppDialogSize.medium,
 }) {
-  if (isDesktopPlatform) {
+  if (isDesktopUi) {
     return showAppSheetDialog<T>(
       context: context,
       builder: builder,

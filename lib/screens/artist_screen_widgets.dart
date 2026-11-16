@@ -107,7 +107,7 @@ extension _ArtistScreenSections on _ArtistScreenState {
     );
 
     // Mornye keeps the full-pane hero on desktop.
-    if (isDesktopPlatform && !context.isMornye) {
+    if (isDesktopUi && !context.isMornye) {
       return _buildDesktopHeader(
         context,
         colorScheme,
@@ -129,7 +129,7 @@ extension _ArtistScreenSections on _ArtistScreenState {
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
                 // The desktop hero spans the content pane.
-                memCacheWidth: isDesktopPlatform ? 1600 : 800,
+                memCacheWidth: isDesktopUi ? 1600 : 800,
                 errorWidget: (_, _, _) =>
                     const Center(child: Icon(CupertinoIcons.person, size: 80)),
               ),
@@ -1203,7 +1203,7 @@ extension _ArtistScreenSections on _ArtistScreenState {
     ColorScheme colorScheme, {
     bool showTypeBadge = false,
   }) {
-    if (isDesktopPlatform && context.isMornye) {
+    if (isDesktopUi && context.isMornye) {
       // Four covers to the pane's width: two line up under each highlight
       // column above.
       return LayoutBuilder(
@@ -1414,10 +1414,10 @@ extension _ArtistScreenSections on _ArtistScreenState {
           : context.l10n.a11yOpenAlbum(album.name),
       child: GestureDetector(
         onTap: () {
-          final kind = isDesktopPlatform
+          final kind = isDesktopUi
               ? desktopClickKind()
               : DesktopClick.replace;
-          if (isDesktopPlatform &&
+          if (isDesktopUi &&
               (isSelectionMode || kind != DesktopClick.replace)) {
             applyDesktopClick(
               album.id,

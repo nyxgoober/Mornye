@@ -14,7 +14,7 @@ const _homeDesktopColumnsMinWidth = 720.0;
 /// Whether Home lays out for a pointer and a wide pane rather than a phone:
 /// the Material desktop app. The Mornye style keeps its own Home.
 bool _homeDesktop(BuildContext context) =>
-    isDesktopPlatform && !context.isMornye;
+    isDesktopUi && !context.isMornye;
 
 double _homeShelfCoverSizeOf(BuildContext context) =>
     _homeDesktop(context) ? _homeDesktopShelfCoverSize : _homeShelfCoverSize;
@@ -26,7 +26,7 @@ double _homeShelfRadiusOf(BuildContext context) => context.isMornye ? 10 : 20;
 
 /// Whether Home uses compact Mornye desktop typography.
 bool _homeCompactText(BuildContext context) =>
-    context.isMornye && isDesktopPlatform;
+    context.isMornye && isDesktopUi;
 
 typedef HomeRecentlyAdded = ({List<UnifiedLibraryItem> items, int trackCount});
 
@@ -644,7 +644,7 @@ class _HomeContinueListeningCardState
   bool _resuming = false;
 
   void _openPlayer() {
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       openDesktopNowPlaying();
     } else {
       Navigator.of(
@@ -953,7 +953,7 @@ class _HomeShelfSize extends StatelessWidget {
     if (!context.isMornye) {
       return builder(context, _homeShelfCoverSizeOf(context));
     }
-    if (!isDesktopPlatform) return builder(context, 160);
+    if (!isDesktopUi) return builder(context, 160);
     return LayoutBuilder(
       builder: (context, constraints) {
         final content = constraints.maxWidth - 2 * inset;
@@ -1411,7 +1411,7 @@ class _HomeTopPicksShelf extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final content = constraints.maxWidth - 2 * inset;
-        final width = isDesktopPlatform
+        final width = isDesktopUi
             ? ((content + _gap) / 4.6 - _gap).clamp(180.0, 320.0)
             : math.min(content - 44, 280.0);
         return SizedBox(

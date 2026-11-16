@@ -118,7 +118,7 @@ ScrollBehavior appScrollBehavior({required bool disableOverscrollEffects}) {
   if (disableOverscrollEffects) {
     return const _VerticalScrollbarBehavior().copyWith(overscroll: false);
   }
-  if (isDesktopPlatform && defaultTargetPlatform != TargetPlatform.macOS) {
+  if (isDesktopUi && defaultTargetPlatform != TargetPlatform.macOS) {
     return const _VerticalScrollbarBehavior();
   }
   return const _FluidScrollBehavior();

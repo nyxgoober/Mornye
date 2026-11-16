@@ -229,7 +229,7 @@ extension _TrackMetadataCards on _TrackMetadataScreenState {
     final coverSize = math.min(
       (MediaQuery.sizeOf(context).width * 0.5).clamp(
         150.0,
-        isDesktopPlatform ? 260.0 : 210.0,
+        isDesktopUi ? 260.0 : 210.0,
       ),
       math.max(96.0, expandedHeight - toolbarBottom - textBlockHeight),
     );

@@ -135,9 +135,9 @@ class _QueueTabState extends ConsumerState<QueueTab> {
   late final CompletionBridgePlayableProbeCache _completionBridgePlayableProbe;
   // Desktop windows are much wider than a phone, so covers start larger
   // there; pinching (or a trackpad pinch) resizes within the range.
-  static double get _libraryGridMinExtent => isDesktopPlatform ? 140 : 92;
-  static double get _libraryGridDefaultExtent => isDesktopPlatform ? 180 : 126;
-  static double get _libraryGridMaxExtent => isDesktopPlatform ? 260 : 190;
+  static double get _libraryGridMinExtent => isDesktopUi ? 140 : 92;
+  static double get _libraryGridDefaultExtent => isDesktopUi ? 180 : 126;
+  static double get _libraryGridMaxExtent => isDesktopUi ? 260 : 190;
   bool _embeddedCoverRefreshScheduled = false;
   // Version counter to trigger targeted cover image rebuilds
   // without rebuilding the entire widget tree via setState.

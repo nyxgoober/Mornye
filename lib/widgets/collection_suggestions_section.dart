@@ -142,7 +142,7 @@ class _CollectionSuggestionsSliverState
     final addTooltip = playlistId != null
         ? context.l10n.collectionSuggestionsAddHere
         : context.l10n.collectionAddToPlaylist;
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       final ids = [
         for (final (i, track) in tracks.indexed)
           'suggestion:$i:${track.source}:${track.id}',

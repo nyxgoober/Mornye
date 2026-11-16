@@ -83,7 +83,7 @@ class _ToolButtonGroupState extends State<ToolButtonGroup> {
   @override
   Widget build(BuildContext context) {
     final tools = widget.tools;
-    final height = isDesktopPlatform ? 40.0 : 44.0;
+    final height = isDesktopUi ? 40.0 : 44.0;
     return GestureDetector(
       onLongPressStart: tools.any((tool) => tool.onLongPress != null)
           ? _handleLongPress

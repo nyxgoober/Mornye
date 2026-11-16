@@ -246,7 +246,7 @@ class AppAlertDialog extends StatelessWidget {
         // at the compact class, so a short question or a single field is
         // not squeezed to the minimum.
         constraints: BoxConstraints(
-          minWidth: isDesktopPlatform ? AppDialogSize.compact.width : 280,
+          minWidth: isDesktopUi ? AppDialogSize.compact.width : 280,
           maxWidth: appSheetDialogMaxWidth,
         ),
         backgroundColor: backgroundColor,

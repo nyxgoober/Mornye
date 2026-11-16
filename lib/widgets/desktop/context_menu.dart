@@ -158,7 +158,7 @@ class _DesktopContextMenuRegionState extends State<DesktopContextMenuRegion>
   @override
   Widget build(BuildContext context) {
     final onContextMenu = widget.onContextMenu;
-    if ((!isDesktopPlatform && !isAndroidTv) || onContextMenu == null) {
+    if ((!isDesktopUi && !isAndroidTv) || onContextMenu == null) {
       return widget.child;
     }
     return Focus(

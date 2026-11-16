@@ -101,13 +101,13 @@ class MornyePlayerQueue extends ConsumerWidget {
       slivers: [
         SliverPadding(
           padding: EdgeInsets.symmetric(
-            horizontal: isDesktopPlatform ? 16 : 28,
+            horizontal: isDesktopUi ? 16 : 28,
           ),
           sliver: SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isDesktopPlatform)
+                if (isDesktopUi)
                   Row(
                     children: [
                       desktopModeButton(

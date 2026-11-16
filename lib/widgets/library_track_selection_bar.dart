@@ -47,7 +47,7 @@ class LibraryTrackSelectionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final inlineDelete = isDesktopPlatform && !albumDelete;
+    final inlineDelete = isDesktopUi && !albumDelete;
     final hasSelection = selectedCount > 0;
     final deleteLabel = hasSelection
         ? context.l10n.selectionDeleteTracksCount(selectedCount)

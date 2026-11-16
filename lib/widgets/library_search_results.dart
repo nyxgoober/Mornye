@@ -728,7 +728,7 @@ class _LibrarySearchResultsState extends ConsumerState<LibrarySearchResults> {
   Widget build(BuildContext context) {
     // Phones keep their rows in landscape too, as the extension search does.
     final coverAllowed =
-        isDesktopPlatform || MediaQuery.sizeOf(context).shortestSide >= 600;
+        isDesktopUi || MediaQuery.sizeOf(context).shortestSide >= 600;
     final inset = wideListInset(context);
     return PopScope(
       canPop: !_selecting,

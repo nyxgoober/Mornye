@@ -168,7 +168,10 @@ void main() {
         safValidation = _startSafTreeValidation(bootstrapSettings);
       }
       musicPlayerRuntime.configure(bootstrapSettings);
-      if (isDesktopPlatform) restoreDesktopSidebar(prefs);
+      forceDesktopUiOverride = Platform.isAndroid
+          ? bootstrapSettings.forceDesktopUi
+          : null;
+      if (isDesktopUi) restoreDesktopSidebar(prefs);
       final bootstrapTheme = loadBootstrapThemeSettings(prefs);
       final initialSafAccessLost = await _detectInitialSafAccessLoss(
         safValidation,
@@ -177,9 +180,6 @@ void main() {
         prefs,
         bootstrapSettings,
       );
-      forceDesktopUiOverride = Platform.isAndroid
-          ? bootstrapSettings.forceDesktopUi
-          : null;
       _configureImageCache(runtimeProfile);
       await orientation;
       // Usually answered by now. The first frame then has the final theme,

@@ -66,7 +66,7 @@ class _LoadingOrErrorScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      if (context.isMornye && collectionHeader && !isDesktopPlatform) {
+      if (context.isMornye && collectionHeader && !isDesktopUi) {
         return MornyeArtistSurface(
           imageSource: coverUrl,
           neutralActions: true,
@@ -99,7 +99,7 @@ class _LoadingOrErrorScaffold extends StatelessWidget {
         );
       }
       // Desktop shows its compact header in both styles.
-      if ((isDesktopPlatform || !context.isMornye) && collectionHeader) {
+      if ((isDesktopUi || !context.isMornye) && collectionHeader) {
         // The real header with the title and cover already known; only the
         // rows that wait for the tracks are skeletons.
         final cover = coverUrl;
@@ -233,7 +233,7 @@ class _ArtistLoadingScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Mornye keeps its full-pane hero on desktop too.
-    if (isDesktopPlatform && !context.isMornye) {
+    if (isDesktopUi && !context.isMornye) {
       final url = coverUrl;
       return Scaffold(
         body: CustomScrollView(
@@ -278,7 +278,7 @@ class _ArtistLoadingScaffold extends StatelessWidget {
                           imageUrl: coverUrl!,
                           fit: BoxFit.cover,
                           alignment: Alignment.topCenter,
-                          memCacheWidth: isDesktopPlatform ? 1600 : 800,
+                          memCacheWidth: isDesktopUi ? 1600 : 800,
                         )
                       : const ShimmerLoading(
                           child: SkeletonBox(

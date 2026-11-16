@@ -290,7 +290,7 @@ class _TrackMetadataScreenState extends ConsumerState<TrackMetadataScreen>
     final mediaSize = MediaQuery.sizeOf(context);
     // Desktop windows are wide and short, so the header takes more of the
     // height to leave the cover room (see _buildHeaderBackground).
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       return (mediaSize.height * 0.62).clamp(440.0, 640.0);
     }
     return (mediaSize.height * 0.55).clamp(360.0, 520.0);

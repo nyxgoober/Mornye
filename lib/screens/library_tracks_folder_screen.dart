@@ -457,7 +457,7 @@ class _LibraryTracksFolderScreenState
               });
             },
           )
-        else if (isDesktopPlatform)
+        else if (isDesktopUi)
           TrackListTable(
             tracks: folderTracks,
             ids: ids,
@@ -823,7 +823,7 @@ class _LibraryTracksFolderScreenState
                   ? context.l10n.collectionRemoveFromPlaylist
                   : context.l10n.collectionRemoveFromFolder,
             ),
-            if (isDesktopPlatform && localCount > 0)
+            if (isDesktopUi && localCount > 0)
               SelectionActionButton(
                 icon: Icons.delete_outline,
                 label: deleteLabel,
@@ -835,7 +835,7 @@ class _LibraryTracksFolderScreenState
               ),
           ],
         ),
-        if (!isDesktopPlatform && localCount > 0) ...[
+        if (!isDesktopUi && localCount > 0) ...[
           const SizedBox(height: 8),
           DestructiveSelectionButton(
             count: _trackActionInProgress ? 0 : localCount,
@@ -1203,7 +1203,7 @@ class _LibraryTracksFolderScreenState
 
   void _showCoverOptionsSheet(BuildContext context, bool hasCustomCover) {
     final colorScheme = Theme.of(context).colorScheme;
-    final menuPosition = isDesktopPlatform
+    final menuPosition = isDesktopUi
         ? contextMenuPositionBelow(context)
         : null;
     if (menuPosition != null) {

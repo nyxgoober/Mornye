@@ -50,7 +50,7 @@ class DownloadServicePicker extends ConsumerStatefulWidget {
       showDragHandle: !mornye,
       // Phones float the glass above the home indicator; the desktop dialog
       // draws its own glass around the picker.
-      mornyeGlass: isDesktopPlatform,
+      mornyeGlass: isDesktopUi,
       // Explicit constraints replace the theme's, so repeat its tablet width.
       constraints: BoxConstraints(
         maxWidth: 640,
@@ -72,7 +72,7 @@ class DownloadServicePicker extends ConsumerStatefulWidget {
             Flexible(child: picker),
           ],
         );
-        if (isDesktopPlatform) return content;
+        if (isDesktopUi) return content;
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           child: MornyeGlassPanel.overlay(child: content),

@@ -423,7 +423,7 @@ class _DownloadedAlbumScreenState extends ConsumerState<DownloadedAlbumScreen>
       subtitle: Builder(
         builder: (header) => Text(
           widget.artistName,
-          style: isDesktopPlatform
+          style: isDesktopUi
               ? desktopDetailSubtitleStyle(header)
               : TextStyle(
                   color: context.isMornye
@@ -624,7 +624,7 @@ class _DownloadedAlbumScreenState extends ConsumerState<DownloadedAlbumScreen>
     final tracks = order.tracks;
     final discMap = order.discGroups;
 
-    if (isDesktopPlatform) return _buildDesktopTable(context, tracks);
+    if (isDesktopUi) return _buildDesktopTable(context, tracks);
     if (discMap.length <= 1) {
       return SliverPadding(
         padding: EdgeInsets.symmetric(horizontal: wideListInset(context)),

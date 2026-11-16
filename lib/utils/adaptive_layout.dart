@@ -37,7 +37,7 @@ double detailHeaderEdgeInset(BuildContext context) {
 /// Simulator shrinks the whole device to fit a desktop display. Desktop
 /// windows keep native density at every size.
 double adaptiveUiScaleForSize(Size size) {
-  if (isDesktopPlatform ||
+  if (isDesktopUi ||
       size.shortestSide < 600 ||
       size.width >= navigationRailBreakpoint) {
     return 1;
@@ -123,7 +123,7 @@ double wideListInset(BuildContext context, {double? contentMaxWidth}) =>
       MediaQuery.sizeOf(context).width,
       contentMaxWidth:
           contentMaxWidth ??
-          (isDesktopPlatform
+          (isDesktopUi
               ? (context.isMornye
                     ? desktopContentMaxWidth
                     : desktopMaterialContentMaxWidth)
@@ -135,7 +135,7 @@ double wideListInset(BuildContext context, {double? contentMaxWidth}) =>
 /// windows (the 16dp phone edge plus 8), so its cover shelves reach the
 /// edge; elsewhere Home centers with [wideListInset].
 double homeContentInset(BuildContext context) =>
-    isDesktopPlatform && !context.isMornye ? 8 : wideListInset(context);
+    isDesktopUi && !context.isMornye ? 8 : wideListInset(context);
 
 const double desktopContentMaxWidth = 1600;
 

@@ -48,7 +48,7 @@ class TrackCollectionQuickActions extends ConsumerWidget {
     bool hasLocalPlaybackCandidate = false,
     Offset? position,
   }) {
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       final origin =
           position ??
           contextMenuOriginOf(context) ??

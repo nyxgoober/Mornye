@@ -277,7 +277,7 @@ class _TutorialScreenState extends ConsumerState<TutorialScreen> {
         ),
       ),
     );
-    if (!isDesktopPlatform) return scaffold;
+    if (!isDesktopUi) return scaffold;
     // Enter moves on, as the default button of a desktop window would.
     return CallbackShortcuts(
       bindings: {
@@ -289,7 +289,7 @@ class _TutorialScreenState extends ConsumerState<TutorialScreen> {
   }
 
   /// Desktop windows keep the tour in one centered column.
-  Widget _desktopColumn(Widget child) => isDesktopPlatform
+  Widget _desktopColumn(Widget child) => isDesktopUi
       ? Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),

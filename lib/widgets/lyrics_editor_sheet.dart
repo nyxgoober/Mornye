@@ -332,7 +332,7 @@ class _LyricsEditorSheetState extends ConsumerState<LyricsEditorSheet> {
     );
     // On phones the sheet takes most of the screen and rises with the
     // keyboard; the desktop dialog brings its own height cap.
-    if (!isDesktopPlatform) {
+    if (!isDesktopUi) {
       body = SizedBox(
         height: media.size.height * 0.92,
         child: Padding(

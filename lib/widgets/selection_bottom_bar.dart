@@ -302,7 +302,7 @@ class SelectionBottomBar extends StatelessWidget {
                 ),
                 // The tap hint describes touch selection; desktop rows select
                 // with the pointer and modifiers, and the toolbar stays short.
-                if (!isDesktopPlatform)
+                if (!isDesktopUi)
                   Text(
                     allSelected
                         ? allSelectedLabel ?? context.l10n.selectionAllSelected
@@ -371,7 +371,7 @@ class SelectionBottomBar extends StatelessWidget {
           child: content,
         ),
       );
-      if (isDesktopPlatform) {
+      if (isDesktopUi) {
         // No navigation bar sits under a desktop page, so the toolbar
         // floats on its own without the backdrop.
         return Padding(
@@ -407,7 +407,7 @@ class SelectionBottomBar extends StatelessWidget {
       );
     }
 
-    if (!isDesktopPlatform) {
+    if (!isDesktopUi) {
       return _SelectionPanelDrag(
         onClose: onClose,
         header: header,

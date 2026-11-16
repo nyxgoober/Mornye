@@ -409,7 +409,7 @@ class _LibraryDirectoryViewState extends ConsumerState<LibraryDirectoryView>
     if (folder == null || folder.trackCount == 0) pruneSelection(const {});
     // A folder opened on desktop takes the album pages' header.
     final detailHeader =
-        isDesktopPlatform &&
+        isDesktopUi &&
         widget.showHeader &&
         key != null &&
         folder != null &&
@@ -474,7 +474,7 @@ class _LibraryDirectoryViewState extends ConsumerState<LibraryDirectoryView>
         // floating player.
         if (showsSelectionBar)
           const SliverToBoxAdapter(child: SizedBox(height: 100))
-        else if (isDesktopPlatform)
+        else if (isDesktopUi)
           const SliverToBoxAdapter(
             child: SizedBox(height: desktopDetailBottomInset),
           ),
@@ -570,7 +570,7 @@ class _LibraryDirectoryViewState extends ConsumerState<LibraryDirectoryView>
   }) {
     final tokens = context.tokens;
     final mornye = context.isMornye;
-    final desktop = isDesktopPlatform;
+    final desktop = isDesktopUi;
     final inset = wideListInset(context);
     // Desktop lines up with the detail header's artwork.
     final gutter = (mornye || desktop ? 20.0 : tokens.gapLg) + inset;
@@ -694,7 +694,7 @@ class _LibraryDirectoryViewState extends ConsumerState<LibraryDirectoryView>
         SliverToBoxAdapter(
           child: TrackListSkeleton(itemCount: min(folder.tracks.length, 8)),
         )
-      else if (isDesktopPlatform)
+      else if (isDesktopUi)
         _songTable(context, items)
       else
         SliverPadding(

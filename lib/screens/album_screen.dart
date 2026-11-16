@@ -624,7 +624,7 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
                 artistId: _artistId,
                 coverUrl: widget.coverUrl,
                 extensionId: widget.extensionId,
-                style: isDesktopPlatform
+                style: isDesktopUi
                     ? desktopDetailSubtitleStyle(header)
                     : TextStyle(
                         color: colorScheme.primary,
@@ -701,7 +701,7 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
     final hasMultipleDiscs = tracks.any(
       (track) => discNumber(track) > 1 || (track.totalDiscs ?? 1) > 1,
     );
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       final ids = [
         for (var i = 0; i < tracks.length; i++) _trackSelectionId(tracks[i], i),
       ];

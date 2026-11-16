@@ -441,7 +441,7 @@ class _PlaylistScreenState extends ConsumerState<PlaylistScreen>
     final existingHistoryKeys = ref.watch(
       downloadHistoryVisibleBatchExistsProvider(_historySnapshot.request),
     );
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       final ids = [
         for (var i = 0; i < _tracks.length; i++)
           _trackSelectionId(_tracks[i], i),

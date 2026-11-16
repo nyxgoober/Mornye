@@ -4,7 +4,7 @@ extension _HomeTabRecentUI on _HomeTabState {
   /// The Mornye desktop Search page lays recents out as a horizontal card shelf.
   bool get _recentAccessAsCards =>
       context.isMornye &&
-      isDesktopPlatform &&
+      isDesktopUi &&
       widget.mode == HomeTabMode.search;
 
   Widget _buildRecentAccess(_RecentAccessView view, ColorScheme colorScheme) {

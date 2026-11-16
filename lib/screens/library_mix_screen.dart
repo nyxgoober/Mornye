@@ -153,7 +153,7 @@ class _LibraryMixScreenState extends ConsumerState<LibraryMixScreen>
         onExitSelectionMode: exitSelectionMode,
         appBar: _buildHeader(context),
         slivers: [
-          if (isDesktopPlatform)
+          if (isDesktopUi)
             _buildDesktopTable(context, ids)
           else
             _buildTrackList(context),
@@ -283,7 +283,7 @@ class _LibraryMixScreenState extends ConsumerState<LibraryMixScreen>
       subtitle: Builder(
         builder: (header) => Text(
           libraryMixSubtitle(l10n, mix),
-          style: isDesktopPlatform
+          style: isDesktopUi
               ? desktopDetailSubtitleStyle(header)
               : TextStyle(
                   color: context.isMornye
@@ -307,7 +307,7 @@ class _LibraryMixScreenState extends ConsumerState<LibraryMixScreen>
         ],
       ),
       // Phones save from the toolbar; the desktop header has its own "+".
-      appBarActions: isDesktopPlatform
+      appBarActions: isDesktopUi
           ? null
           : [
               HeaderCircleButton(

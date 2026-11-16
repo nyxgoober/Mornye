@@ -101,7 +101,7 @@ class _RepoTabState extends ConsumerState<RepoTab> {
     // Desktop fills the pane with a grid instead, with the same edges as the
     // other tabs.
     final edge = 16 + wideListInset(context);
-    final desktopColumns = isDesktopPlatform
+    final desktopColumns = isDesktopUi
         ? _desktopGridColumns(MediaQuery.sizeOf(context).width - edge * 2)
         : 1;
 
@@ -684,7 +684,7 @@ class _CategoryChipRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final padding = EdgeInsets.symmetric(horizontal: edge, vertical: 8);
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       return Padding(
         padding: padding,
         child: Wrap(spacing: 8, runSpacing: 8, children: children),

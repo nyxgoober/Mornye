@@ -125,7 +125,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
   var _detailNavigatorKey = GlobalKey<NavigatorState>();
   static const int _profileSelection = -1;
 
-  bool get _supportsListDetail => isDesktopPlatform && !widget.asPage;
+  bool get _supportsListDetail => isDesktopUi && !widget.asPage;
 
   @override
   void initState() {

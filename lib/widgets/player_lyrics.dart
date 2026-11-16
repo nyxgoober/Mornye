@@ -35,8 +35,8 @@ const _mornyeLyricFontSize = 34.0;
 
 /// Material lyric sizes on desktop, where the lyrics panel is far wider than
 /// a phone. Null keeps the text theme's size (phones and tablets).
-double? get _materialLyricFontSize => isDesktopPlatform ? 32 : null;
-double get _materialBackgroundLyricFontSize => isDesktopPlatform ? 24 : 18;
+double? get _materialLyricFontSize => isDesktopUi ? 32 : null;
+double get _materialBackgroundLyricFontSize => isDesktopUi ? 24 : 18;
 const mornyeLyricsContentInset = 28.0 + MornyePlayerSlider.horizontalInset;
 
 /// How much of the lyrics area's bottom the player's controls cover. The

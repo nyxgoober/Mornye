@@ -75,7 +75,7 @@ class AppTheme {
       tabBarTheme: _tabBarTheme(scheme),
       dividerTheme: _dividerTheme(scheme),
       extensions: <ThemeExtension<dynamic>>[
-        isDesktopPlatform ? AppTokens.desktop : AppTokens.standard,
+        isDesktopUi ? AppTokens.desktop : AppTokens.standard,
       ],
       fontFamily: family,
       textTheme: textTheme,
@@ -126,7 +126,7 @@ class AppTheme {
       tabBarTheme: _tabBarTheme(scheme),
       dividerTheme: _dividerTheme(scheme),
       extensions: <ThemeExtension<dynamic>>[
-        isDesktopPlatform ? AppTokens.desktop : AppTokens.standard,
+        isDesktopUi ? AppTokens.desktop : AppTokens.standard,
       ],
       fontFamily: family,
       textTheme: textTheme,

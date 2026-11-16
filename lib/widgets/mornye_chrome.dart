@@ -59,7 +59,7 @@ class MornyeSegmentedControl extends ConsumerWidget {
               // over an opaque toolbar it only refracts a flat fill, so desktop
               // skips it.
               liquidInteraction:
-                  !isDesktopPlatform &&
+                  !isDesktopUi &&
                   ref.watch(mornyeLiquidGlassProvider) &&
                   MornyeTheme.glassClarityOf(context) > 0.2,
               labels: labels,

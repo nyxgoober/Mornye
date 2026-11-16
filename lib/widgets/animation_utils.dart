@@ -267,7 +267,7 @@ class TrackListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       return _DesktopTrackListSkeleton(itemCount: itemCount, showArtwork: true);
     }
     if (context.isMornye) {
@@ -402,7 +402,7 @@ class AlbumTrackListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       return _DesktopTrackListSkeleton(
         itemCount: itemCount,
         albumLayout: context.isMornye,
@@ -724,7 +724,7 @@ class CollectionHeaderSkeletonRows {
       width: 140,
       height: MediaQuery.textScalerOf(
         context,
-      ).scale(isDesktopPlatform ? 24 : 18),
+      ).scale(isDesktopUi ? 24 : 18),
       borderRadius: 4,
     ),
   );
@@ -742,7 +742,7 @@ class CollectionHeaderSkeletonRows {
   );
 
   static Widget actions(BuildContext context) {
-    if (isDesktopPlatform) {
+    if (isDesktopUi) {
       final target = context.isMornye ? 36.0 : 40.0;
       return ShimmerLoading(
         child: Row(
@@ -837,7 +837,7 @@ class ArtistScreenSkeleton extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (showCoverHeader && !isDesktopPlatform)
+              if (showCoverHeader && !isDesktopUi)
                 LayoutBuilder(
                   builder: (context, constraints) => Stack(
                     children: [
@@ -941,7 +941,7 @@ class ArtistScreenSkeleton extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showCoverHeader && !isDesktopPlatform)
+            if (showCoverHeader && !isDesktopUi)
               LayoutBuilder(
                 builder: (context, constraints) => SkeletonBox(
                   width: constraints.maxWidth,

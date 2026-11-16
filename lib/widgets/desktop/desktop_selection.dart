@@ -257,7 +257,7 @@ class _DesktopListScopeState extends State<DesktopListScope> {
 
   @override
   Widget build(BuildContext context) {
-    if (!isDesktopPlatform) return widget.child;
+    if (!isDesktopUi) return widget.child;
     return FocusScope(
       node: _node,
       onKeyEvent: _handleKey,

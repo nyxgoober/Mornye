@@ -160,7 +160,7 @@ class _MornyeLibraryScreenState extends ConsumerState<MornyeLibraryScreen> {
     List<(String, String, IconData)> options,
     String current,
   ) {
-    final position = isDesktopPlatform
+    final position = isDesktopUi
         ? contextMenuPositionBelow(buttonContext)
         : null;
     if (position == null) return null;

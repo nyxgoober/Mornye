@@ -44,7 +44,7 @@ class _DesktopHoverPlayButtonState extends State<DesktopHoverPlayButton> {
 
   @override
   Widget build(BuildContext context) {
-    if (!isDesktopPlatform || widget.onPlay == null) {
+    if (!isDesktopUi || widget.onPlay == null) {
       return const SizedBox.shrink();
     }
     final colorScheme = Theme.of(context).colorScheme;

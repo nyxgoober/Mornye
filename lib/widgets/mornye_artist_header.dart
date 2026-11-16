@@ -66,7 +66,7 @@ class _MornyeArtistSurfaceState extends State<MornyeArtistSurface> {
   Widget build(BuildContext context) {
     // Desktop album and playlist pages keep the plain pane background and
     // app accent; artist pages keep their artwork tint.
-    if (isDesktopPlatform && widget.neutralActions) return widget.child;
+    if (isDesktopUi && widget.neutralActions) return widget.child;
     final baseTheme = Theme.of(context);
     if (!identical(baseTheme, _baseTheme) ||
         defaultTargetPlatform != _basePlatform) {
@@ -129,7 +129,7 @@ class _MornyeArtistSurfaceState extends State<MornyeArtistSurface> {
               route: route,
               brightness: Brightness.dark,
               surface: surface,
-              backdrop: isDesktopPlatform && !widget.neutralActions
+              backdrop: isDesktopUi && !widget.neutralActions
                   ? source
                   : null,
             );
@@ -196,7 +196,7 @@ class _MornyeArtistSurfaceState extends State<MornyeArtistSurface> {
               );
               return Theme(
                 data: _innerTheme,
-                child: isDesktopPlatform && !widget.neutralActions
+                child: isDesktopUi && !widget.neutralActions
                     ? NotificationListener<ScrollNotification>(
                         onNotification: _onPageScroll,
                         child: page,
@@ -249,7 +249,7 @@ class MornyeArtistHeader extends StatelessWidget {
   List<Widget> buildSlivers(BuildContext context) {
     final surface = Theme.of(context).colorScheme.surface;
     final back = Padding(
-      padding: EdgeInsetsDirectional.only(start: isDesktopPlatform ? 8 : 12),
+      padding: EdgeInsetsDirectional.only(start: isDesktopUi ? 8 : 12),
       child: Align(
         alignment: AlignmentDirectional.centerStart,
         widthFactor: 1,
@@ -266,7 +266,7 @@ class MornyeArtistHeader extends StatelessWidget {
       SliverLayoutInfoBuilder(
         select: (constraints) => (
           constraints.crossAxisExtent,
-          isDesktopPlatform ? constraints.viewportMainAxisExtent : 0.0,
+          isDesktopUi ? constraints.viewportMainAxisExtent : 0.0,
         ),
         builder: (context, extents) {
           final (width, viewportHeight) = extents;
@@ -305,7 +305,7 @@ class MornyeArtistHeader extends StatelessWidget {
               (actions.isEmpty ? 0 : 94) +
               32;
           // The desktop portrait fills most of the content pane.
-          final expandedHeight = isDesktopPlatform
+          final expandedHeight = isDesktopUi
               ? math.max(
                   contentHeight + 160,
                   (viewportHeight * 0.82).clamp(420.0, 820.0),
@@ -323,10 +323,10 @@ class MornyeArtistHeader extends StatelessWidget {
                 ? null
                 : [MornyeActionCapsule(children: toolbarActions)],
             actionsPadding: EdgeInsetsDirectional.only(
-              end: isDesktopPlatform ? 8 : 12,
+              end: isDesktopUi ? 8 : 12,
             ),
             // The desktop hero already displays the artist's name.
-            title: isDesktopPlatform
+            title: isDesktopUi
                 ? null
                 : headerToolbarTitle(
                     showTitleListenable,
@@ -406,9 +406,9 @@ class MornyeArtistHeader extends StatelessWidget {
   }
 
   /// The name and logo are larger over the wide desktop portrait.
-  static double get _nameSize => isDesktopPlatform ? 44 : 30;
+  static double get _nameSize => isDesktopUi ? 44 : 30;
   static Size get _logoSize =>
-      isDesktopPlatform ? const Size(440, 128) : const Size(320, 96);
+      isDesktopUi ? const Size(440, 128) : const Size(320, 96);
 
   Widget _buildIdentity(BuildContext context) {
     final fallback = Text(

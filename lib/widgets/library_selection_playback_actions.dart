@@ -97,7 +97,7 @@ class LibrarySelectionPlaybackActions extends ConsumerWidget {
           runSpacing: 8,
           children: [
             for (final action in actions)
-              if (isDesktopPlatform)
+              if (isDesktopUi)
                 action
               else
                 SizedBox(width: (constraints.maxWidth - 8) / 2, child: action),
