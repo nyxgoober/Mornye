@@ -173,7 +173,13 @@ void main() {
       final initialSafAccessLost = await _detectInitialSafAccessLoss(
         safValidation,
       );
-      final runtimeProfile = await _resolveRuntimeProfile(prefs);
+      final runtimeProfile = await _resolveRuntimeProfile(
+        prefs,
+        bootstrapSettings,
+      );
+      forceDesktopUiOverride = Platform.isAndroid
+          ? bootstrapSettings.forceDesktopUi
+          : null;
       _configureImageCache(runtimeProfile);
       await orientation;
       // Usually answered by now. The first frame then has the final theme,
@@ -447,7 +453,17 @@ Future<bool> _detectInitialSafAccessLoss(
   return !accessible;
 }
 
-Future<_RuntimeProfile> _resolveRuntimeProfile(SharedPreferences prefs) async {
+Future<_RuntimeProfile> _resolveRuntimeProfile(
+  SharedPreferences prefs,
+  AppSettings bootstrapSettings,
+) async {
+  // An explicit user override always wins over both the cached and the
+  // freshly-detected tier: that's the point of offering it in Settings.
+  final manualTier = _RuntimeProfile.fromTier(
+    bootstrapSettings.deviceTierOverride,
+  );
+  if (manualTier != null) return manualTier;
+
   final cachedTier = prefs.getString(_runtimeProfileTierKey);
   if (cachedTier != null) {
     final cached = _RuntimeProfile.fromTier(cachedTier);

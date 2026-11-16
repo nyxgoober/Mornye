@@ -994,6 +994,22 @@ class SettingsNotifier extends Notifier<AppSettings> {
   void setForceBackdropBlur(bool enabled) =>
       _commit(state.copyWith(forceBackdropBlur: enabled));
 
+  /// Renders the desktop shell on this Android device. Takes effect on next
+  /// launch; [forceDesktopUiOverride] is only read once at startup.
+  void setForceDesktopUi(bool enabled) =>
+      _commit(state.copyWith(forceDesktopUi: enabled));
+
+  /// '' for auto-detect, or 'low' / 'standard' / 'high' to pin the device
+  /// tier. Takes effect on next launch; the runtime profile is only
+  /// resolved once at startup.
+  void setDeviceTierOverride(String tier) => _commit(
+    state.copyWith(
+      deviceTierOverride: {'low', 'standard', 'high'}.contains(tier)
+          ? tier
+          : '',
+    ),
+  );
+
   void setExtensionVerificationBrowserMode(String mode) => _commit(
     state.copyWith(
       extensionVerificationBrowserMode:

@@ -2751,6 +2751,38 @@
   "@appearanceForceBlurSubtitle": {
     "description": "Subtitle for the force-blur toggle"
   },
+  "appearanceDesktopUi": "Use desktop layout",
+  "@appearanceDesktopUi": {
+    "description": "Toggle that renders the desktop shell (sidebar, window-style chrome) on a large-screen Android device"
+  },
+  "appearanceDesktopUiSubtitle": "Sidebar navigation and desktop-style windows instead of the phone layout. Open a context menu with a two-finger tap. Restart to apply.",
+  "@appearanceDesktopUiSubtitle": {
+    "description": "Subtitle for the desktop-layout toggle, explaining the two-finger-tap context menu gesture and the restart requirement"
+  },
+  "appearanceDeviceTier": "Device performance",
+  "@appearanceDeviceTier": {
+    "description": "Section/row title for the device performance tier override"
+  },
+  "appearanceDeviceTierSubtitle": "Sets the image cache size and whether blur and scroll effects run by default. Restart to apply.",
+  "@appearanceDeviceTierSubtitle": {
+    "description": "Subtitle for the device performance tier override, explaining what it controls and the restart requirement"
+  },
+  "appearanceDeviceTierAuto": "Auto",
+  "@appearanceDeviceTierAuto": {
+    "description": "Device performance tier option: detect automatically from device RAM/ABI"
+  },
+  "appearanceDeviceTierLow": "Low",
+  "@appearanceDeviceTierLow": {
+    "description": "Device performance tier option: low-end"
+  },
+  "appearanceDeviceTierStandard": "Mid",
+  "@appearanceDeviceTierStandard": {
+    "description": "Device performance tier option: standard/mid-range"
+  },
+  "appearanceDeviceTierHigh": "High",
+  "@appearanceDeviceTierHigh": {
+    "description": "Device performance tier option: high-end"
+  },
   "queueClearAll": "Clear All",
   "@queueClearAll": {
     "description": "Button - clear all queue items"

@@ -10,6 +10,7 @@ import 'package:mornye/utils/android_tv.dart';
 import 'package:mornye/widgets/app_icon.dart';
 import 'package:mornye/widgets/desktop/desktop_selection.dart';
 import 'package:mornye/widgets/mornye_context_menu.dart';
+import 'package:mornye/widgets/two_finger_tap_listener.dart';
 
 /// One row of a desktop context menu. Use `Icons.*`; Mornye swaps in the
 /// Cupertino glyph.
@@ -172,7 +173,16 @@ class _DesktopContextMenuRegionState extends State<DesktopContextMenuRegion>
         onPointerDown: _handlePointerDown,
         child: GestureDetector(
           onSecondaryTapUp: (details) => onContextMenu(details.globalPosition),
-          child: widget.child,
+          // Right-click and Ctrl+click have no touch equivalent, so a
+          // touch-only device opening this desktop shell (an Android tablet
+          // with "Use desktop layout" on) needs its own gesture. A
+          // two-finger tap is the closest match: it doesn't collide with
+          // scrolling, long-press (still wired separately to the bottom
+          // sheet on phones) or the drag handles some of these rows use.
+          child: TwoFingerTapListener(
+            onTwoFingerTap: onContextMenu,
+            child: widget.child,
+          ),
         ),
       ),
     );

@@ -127,6 +127,8 @@ AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => AppSettings(
   showExtensionStore: json['showExtensionStore'] as bool? ?? true,
   heroAnimationsEnabled: json['heroAnimationsEnabled'] as bool? ?? true,
   forceBackdropBlur: json['forceBackdropBlur'] as bool? ?? false,
+  forceDesktopUi: json['forceDesktopUi'] as bool? ?? false,
+  deviceTierOverride: json['deviceTierOverride'] as String? ?? '',
   extensionVerificationBrowserMode:
       json['extensionVerificationBrowserMode'] as String? ?? 'in_app_first',
   locale: json['locale'] as String? ?? 'system',
@@ -273,6 +275,8 @@ Map<String, dynamic> _$AppSettingsToJson(
   'showExtensionStore': instance.showExtensionStore,
   'heroAnimationsEnabled': instance.heroAnimationsEnabled,
   'forceBackdropBlur': instance.forceBackdropBlur,
+  'forceDesktopUi': instance.forceDesktopUi,
+  'deviceTierOverride': instance.deviceTierOverride,
   'extensionVerificationBrowserMode': instance.extensionVerificationBrowserMode,
   'locale': instance.locale,
   'lyricsMode': instance.lyricsMode,

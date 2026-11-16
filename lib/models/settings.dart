@@ -186,6 +186,18 @@ class AppSettings {
   /// profile disabled it for this device tier. Off means "follow the
   /// device default".
   final bool forceBackdropBlur;
+
+  /// Renders the desktop shell (sidebar navigation, window-style chrome,
+  /// desktop now-playing layout, hover/desktop context menus) on Android
+  /// instead of the phone shell. Meant for large-screen tablets; has no
+  /// effect on iOS, or on desktop platforms, which already get this shell.
+  final bool forceDesktopUi;
+
+  /// Overrides the startup RAM/ABI-based device tier used to size the image
+  /// cache and decide whether blur and overscroll effects run by default.
+  /// '' (empty) means "auto-detect", otherwise one of 'low', 'standard',
+  /// 'high'.
+  final String deviceTierOverride;
   final String
   extensionVerificationBrowserMode; // 'external_first' or 'in_app_first'
   final String locale;
@@ -358,6 +370,8 @@ class AppSettings {
     this.showExtensionStore = true,
     this.heroAnimationsEnabled = true,
     this.forceBackdropBlur = false,
+    this.forceDesktopUi = false,
+    this.deviceTierOverride = '',
     this.extensionVerificationBrowserMode = 'in_app_first',
     this.locale = 'system',
     this.lyricsMode = 'embed',
@@ -514,6 +528,8 @@ class AppSettings {
     bool? showExtensionStore,
     bool? heroAnimationsEnabled,
     bool? forceBackdropBlur,
+    bool? forceDesktopUi,
+    String? deviceTierOverride,
     String? extensionVerificationBrowserMode,
     String? locale,
     String? lyricsMode,
@@ -669,6 +685,8 @@ class AppSettings {
       heroAnimationsEnabled:
           heroAnimationsEnabled ?? this.heroAnimationsEnabled,
       forceBackdropBlur: forceBackdropBlur ?? this.forceBackdropBlur,
+      forceDesktopUi: forceDesktopUi ?? this.forceDesktopUi,
+      deviceTierOverride: deviceTierOverride ?? this.deviceTierOverride,
       extensionVerificationBrowserMode:
           extensionVerificationBrowserMode ??
           this.extensionVerificationBrowserMode,

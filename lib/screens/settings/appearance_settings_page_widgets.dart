@@ -585,6 +585,80 @@ class _ThemeModeSelector extends StatelessWidget {
   }
 }
 
+/// '' (auto-detect), 'low', 'standard' or 'high'. Mirrors [_ThemeModeSelector]:
+/// a Mornye segmented control, or the Material segmented choice elsewhere.
+/// Takes effect on next launch, same as [DesktopWindowModeSetting].
+class _DeviceTierSelector extends StatelessWidget {
+  final String currentTier;
+  final ValueChanged<String> onChanged;
+  const _DeviceTierSelector({
+    required this.currentTier,
+    required this.onChanged,
+  });
+
+  static const _tiers = ['', 'low', 'standard', 'high'];
+
+  String _label(BuildContext context, String tier) => switch (tier) {
+    'low' => context.l10n.appearanceDeviceTierLow,
+    'standard' => context.l10n.appearanceDeviceTierStandard,
+    'high' => context.l10n.appearanceDeviceTierHigh,
+    _ => context.l10n.appearanceDeviceTierAuto,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitle = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      child: Text(
+        context.l10n.appearanceDeviceTierSubtitle,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+    if (context.isMornye) {
+      final labels = [for (final tier in _tiers) _label(context, tier)];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          subtitle,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: MornyeSegmentedControl(
+              labels: labels,
+              selectedIndex: _tiers.indexOf(currentTier),
+              onChanged: (index) => onChanged(_tiers[index]),
+              samplesBackdrop: false,
+            ),
+          ),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        subtitle,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: SettingsSegmentedChoice<String>(
+            selected: currentTier,
+            onChanged: onChanged,
+            semanticLabel: context.l10n.appearanceDeviceTier,
+            options: [
+              for (final tier in _tiers)
+                SettingsSegmentOption(
+                  value: tier,
+                  label: _label(context, tier),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _HistoryViewSelector extends StatelessWidget {
   final String currentMode;
   final ValueChanged<String> onChanged;

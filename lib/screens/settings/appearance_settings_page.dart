@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:mornye/widgets/app_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +40,29 @@ class AppearanceSettingsPage extends ConsumerWidget {
             if (isDesktopPlatform)
               const SliverToBoxAdapter(
                 child: SettingsGroup(children: [DesktopWindowModeSetting()]),
+              ),
+
+            // Large-screen Android only: the desktop shell assumes a mouse
+            // or a landscape tablet's worth of space, so it's not offered on
+            // phones. A context menu opens with a two-finger tap instead of
+            // the right-click/Ctrl+click this shell otherwise expects.
+            if (Platform.isAndroid &&
+                MediaQuery.sizeOf(context).shortestSide >= 600)
+              SliverToBoxAdapter(
+                child: SettingsGroup(
+                  children: [
+                    SettingsSwitchItem(
+                      icon: Icons.dashboard_customize_outlined,
+                      title: context.l10n.appearanceDesktopUi,
+                      subtitle: context.l10n.appearanceDesktopUiSubtitle,
+                      value: settings.forceDesktopUi,
+                      onChanged: (value) => ref
+                          .read(settingsProvider.notifier)
+                          .setForceDesktopUi(value),
+                      showDivider: false,
+                    ),
+                  ],
+                ),
               ),
 
             ...settingsSectionSlivers(
@@ -215,10 +240,22 @@ class AppearanceSettingsPage extends ConsumerWidget {
                     onChanged: (value) => ref
                         .read(settingsProvider.notifier)
                         .setForceBackdropBlur(value),
-                    showDivider: false,
                   ),
                 ],
               ),
+            ),
+
+            ...settingsSectionSlivers(
+              title: context.l10n.appearanceDeviceTier,
+              connected: true,
+              children: [
+                _DeviceTierSelector(
+                  currentTier: settings.deviceTierOverride,
+                  onChanged: (tier) => ref
+                      .read(settingsProvider.notifier)
+                      .setDeviceTierOverride(tier),
+                ),
+              ],
             ),
 
             ...settingsSectionSlivers(

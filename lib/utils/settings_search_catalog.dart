@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:mornye/l10n/app_localizations.dart';
 import 'package:mornye/utils/desktop_platform.dart';
@@ -151,6 +153,31 @@ class SettingsSearchCatalog {
           title: l10n.appearanceForceBlur,
           subtitle: l10n.appearanceForceBlurSubtitle,
           keywords: const ['backdrop blur', 'performance'],
+        ),
+        if (Platform.isAndroid)
+          SettingsSearchEntry(
+            icon: Icons.dashboard_customize_outlined,
+            title: l10n.appearanceDesktopUi,
+            subtitle: l10n.appearanceDesktopUiSubtitle,
+            keywords: const [
+              'tablet',
+              'sidebar',
+              'desktop layout',
+              'two finger',
+              'context menu',
+            ],
+          ),
+        SettingsSearchEntry(
+          icon: Icons.memory,
+          title: l10n.appearanceDeviceTier,
+          subtitle: l10n.appearanceDeviceTierSubtitle,
+          keywords: const [
+            'performance',
+            'low end',
+            'high end',
+            'ram',
+            'tier',
+          ],
         ),
         SettingsSearchEntry(
           icon: Icons.language,
