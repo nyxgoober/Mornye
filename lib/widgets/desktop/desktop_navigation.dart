@@ -1,5 +1,6 @@
 import 'dart:ui' show lerpDouble;
 
+import 'package:mornye/widgets/desktop/desktop_system_insets.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -253,7 +254,12 @@ class DesktopShellLayout extends ConsumerWidget {
               Visibility(
                 visible: !nowPlayingOpen,
                 maintainState: true,
-                child: shell!,
+                child: DesktopInsetLayer(
+                  background: context.isMornye
+                      ? Theme.of(context).colorScheme.surface
+                      : Theme.of(context).scaffoldBackgroundColor,
+                  child: shell!,
+                ),
               ),
               if (nowPlayingOpen)
                 KeyedSubtree(

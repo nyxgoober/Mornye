@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:audio_service/audio_service.dart';
+import 'package:mornye/widgets/desktop/desktop_system_insets.dart';
 import 'package:flutter/cupertino.dart' show CupertinoButton, CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -128,6 +129,13 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
               )
             else
               ColoredBox(color: colorScheme.surface),
+            // The background above fills the screen; the controls and
+            // layout keep clear of the Android system bars.
+            Padding(
+              padding: desktopSystemInsets(context),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
             ValueListenableBuilder<DesktopInspectorPanel?>(
               valueListenable: desktopInspectorPanel,
               builder: (context, panel, _) => mediaItem == null
@@ -210,6 +218,9 @@ class _DesktopNowPlayingState extends ConsumerState<DesktopNowPlaying> {
                     ],
                   ),
                 ),
+              ),
+            ),
+                ],
               ),
             ),
           ],

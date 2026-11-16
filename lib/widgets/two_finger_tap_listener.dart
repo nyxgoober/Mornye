@@ -1,24 +1,18 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
-/// Observes a two-finger tap without competing in Flutter's gesture arena.
+/// Reports a two-finger tap, the touch stand-in for a right-click.
 ///
-/// This is the touch equivalent of a right-click or Ctrl+click: the gesture
-/// a touch-only device (an Android tablet running the desktop shell) uses to
-/// open a context menu. A plain [GestureDetector] has no built-in two-finger
-/// tap recognizer, and anything built on [GestureDetector.onScaleStart]
-/// would also catch an ordinary one-finger pan and could win against a
-/// surrounding scrollable's drag recognizer. Raw pointer observation, like
-/// [TwoFingerPinchListener], keeps one-finger scrolling and taps untouched
-/// and only reports a tap once exactly two touch pointers landed together
-/// and lifted again without wandering or overstaying a normal tap.
+/// It joins the gesture arena, unlike a plain pointer [Listener]. The moment
+/// the second finger lands it claims both pointers, so the row or button under
+/// the fingers loses its own tap and nothing is activated besides the menu.
+/// A single finger never resolves in its favor: it rejects itself on lift, so
+/// ordinary taps, scrolls and drags work as before.
 ///
-/// [onTwoFingerTap] fires with the midpoint of the two touches at the moment
-/// the second finger went down, in the same coordinate space
-/// `details.globalPosition` would use, so callers that already open a
-/// context menu from a pointer position (right-click, Ctrl+click) can feed
-/// it the same way.
-class TwoFingerTapListener extends StatefulWidget {
+/// [onTwoFingerTap] gets the midpoint of the two touches, in the same
+/// coordinate space as `details.globalPosition`, once both fingers have
+/// lifted without wandering or overstaying a normal tap.
+class TwoFingerTapListener extends StatelessWidget {
   const TwoFingerTapListener({
     super.key,
     required this.onTwoFingerTap,
@@ -29,23 +23,39 @@ class TwoFingerTapListener extends StatefulWidget {
   final Widget child;
 
   @override
-  State<TwoFingerTapListener> createState() => _TwoFingerTapListenerState();
+  Widget build(BuildContext context) {
+    return RawGestureDetector(
+      behavior: HitTestBehavior.translucent,
+      gestures: <Type, GestureRecognizerFactory>{
+        _TwoFingerTapRecognizer:
+            GestureRecognizerFactoryWithHandlers<_TwoFingerTapRecognizer>(
+              _TwoFingerTapRecognizer.new,
+              (recognizer) => recognizer.onTwoFingerTap = onTwoFingerTap,
+            ),
+      },
+      child: child,
+    );
+  }
 }
 
-class _TwoFingerTapListenerState extends State<TwoFingerTapListener> {
+class _TwoFingerTapRecognizer extends OneSequenceGestureRecognizer {
+  _TwoFingerTapRecognizer({super.debugOwner});
+
+  ValueChanged<Offset>? onTwoFingerTap;
+
   // Generous enough for two fingers landing a beat apart, tight enough that
   // it never reads as a long press or an unrelated later tap.
   static const _maxTapDuration = Duration(milliseconds: 350);
 
-  // A tap, not a pan or a pinch: each pointer may drift a little without
-  // cancelling the gesture, but not scroll- or pinch-sized distances.
+  // A tap, not a pan or a pinch: each finger may drift a little.
   static const _maxTapTravel = 18.0;
 
   final Map<int, Offset> _downPositions = <int, Offset>{};
   DateTime? _firstDownAt;
-  Offset? _tapOrigin;
-  bool _everHadTwo = false;
-  bool _cancelled = false;
+  Offset? _origin;
+  int _liftedCount = 0;
+  bool _claimed = false;
+  bool _failed = false;
 
   bool get _expired {
     final firstDownAt = _firstDownAt;
@@ -53,82 +63,93 @@ class _TwoFingerTapListenerState extends State<TwoFingerTapListener> {
         DateTime.now().difference(firstDownAt) > _maxTapDuration;
   }
 
-  void _reset() {
-    _downPositions.clear();
-    _firstDownAt = null;
-    _tapOrigin = null;
-    _everHadTwo = false;
-    _cancelled = false;
-  }
+  @override
+  bool isPointerAllowed(PointerDownEvent event) =>
+      event.kind == PointerDeviceKind.touch && super.isPointerAllowed(event);
 
-  void _handlePointerDown(PointerDownEvent event) {
-    if (event.kind != PointerDeviceKind.touch) return;
-
-    // A third finger means this was never a clean two-finger tap.
-    if (_downPositions.length >= 2) {
-      _cancelled = true;
-      return;
-    }
-
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    startTrackingPointer(event.pointer, event.transform);
     if (_downPositions.isEmpty) {
       _firstDownAt = DateTime.now();
-      _cancelled = false;
-      _everHadTwo = false;
-    } else if (_expired) {
-      _cancelled = true;
+      _liftedCount = 0;
+      _claimed = false;
+      _failed = false;
+      _origin = null;
     }
-
+    // A third finger means this was never a clean two-finger tap.
+    if (_downPositions.length >= 2) {
+      _failed = true;
+      return;
+    }
     _downPositions[event.pointer] = event.position;
-
     if (_downPositions.length == 2) {
-      _everHadTwo = true;
+      if (_expired) {
+        _failed = true;
+        return;
+      }
       final positions = _downPositions.values.toList(growable: false);
-      _tapOrigin = Offset(
+      _origin = Offset(
         (positions[0].dx + positions[1].dx) / 2,
         (positions[0].dy + positions[1].dy) / 2,
       );
-    }
-  }
-
-  void _handlePointerMove(PointerMoveEvent event) {
-    final start = _downPositions[event.pointer];
-    if (start == null) return;
-    if ((event.position - start).distance > _maxTapTravel) {
-      _cancelled = true;
-    }
-  }
-
-  void _handlePointerUp(PointerEvent event) {
-    final wasTracked = _downPositions.remove(event.pointer) != null;
-    if (!wasTracked) return;
-
-    if (_downPositions.isEmpty) {
-      final origin = _tapOrigin;
-      if (_everHadTwo && !_cancelled && !_expired && origin != null) {
-        widget.onTwoFingerTap(origin);
+      // Win both pointers' arenas now, so the widgets under the fingers
+      // get their taps rejected instead of firing when a finger lifts.
+      _claimed = true;
+      for (final pointer in _downPositions.keys) {
+        resolvePointer(pointer, GestureDisposition.accepted);
       }
-      _reset();
-    }
-  }
-
-  void _handlePointerCancel(PointerCancelEvent event) {
-    if (_downPositions.remove(event.pointer) == null) return;
-    if (_downPositions.isEmpty) {
-      _reset();
-    } else {
-      _cancelled = true;
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: _handlePointerDown,
-      onPointerMove: _handlePointerMove,
-      onPointerUp: _handlePointerUp,
-      onPointerCancel: _handlePointerCancel,
-      child: widget.child,
-    );
+  void handleEvent(PointerEvent event) {
+    if (event is PointerMoveEvent) {
+      final start = _downPositions[event.pointer];
+      if (start != null && (event.position - start).distance > _maxTapTravel) {
+        _failed = true;
+      }
+    } else if (event is PointerUpEvent) {
+      if (!_claimed) {
+        // One finger on its own: step aside for the normal tap or scroll.
+        resolvePointer(event.pointer, GestureDisposition.rejected);
+      }
+      if (_downPositions.containsKey(event.pointer)) _liftedCount++;
+      if (_claimed && _liftedCount == 2) {
+        final origin = _origin;
+        if (!_failed && !_expired && origin != null) {
+          invokeCallback<void>(
+            'onTwoFingerTap',
+            () => onTwoFingerTap?.call(origin),
+          );
+        }
+      }
+      stopTrackingPointer(event.pointer);
+    } else if (event is PointerCancelEvent) {
+      _failed = true;
+      stopTrackingPointer(event.pointer);
+    }
   }
+
+  @override
+  void didStopTrackingLastPointer(int pointer) {
+    _downPositions.clear();
+    _firstDownAt = null;
+    _origin = null;
+    _liftedCount = 0;
+    _claimed = false;
+    _failed = false;
+  }
+
+  @override
+  void acceptGesture(int pointer) {}
+
+  @override
+  void rejectGesture(int pointer) {
+    if (_claimed) return;
+    _failed = true;
+  }
+
+  @override
+  String get debugDescription => 'two-finger tap';
 }
