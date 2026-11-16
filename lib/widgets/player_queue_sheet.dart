@@ -11,6 +11,7 @@ import 'package:mornye/widgets/expressive_button.dart';
 import 'package:mornye/widgets/player_playback_controls.dart';
 import 'package:mornye/widgets/player_queue_artwork.dart';
 import 'package:mornye/widgets/player_queue_dismissible.dart';
+import 'package:mornye/widgets/queue_spoiler_shield.dart';
 
 Future<void> showPlayerQueueSheet(
   BuildContext context,
@@ -190,33 +191,44 @@ class PlayerQueueSheet extends ConsumerWidget {
                       ),
                       child: SizedBox.square(
                         dimension: 44,
-                        child: PlayerQueueArtwork(
-                          item: item,
-                          colorScheme: colorScheme,
-                          cacheWidth: 132,
-                          iconSize: 22,
+                        child: QueueSpoilerShield(
+                          hidden: !isCurrent,
+                          grayscale: true,
+                          sigma: 8,
+                          child: PlayerQueueArtwork(
+                            item: item,
+                            colorScheme: colorScheme,
+                            cacheWidth: 132,
+                            iconSize: 22,
+                          ),
                         ),
                       ),
                     ),
-                    title: Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyLarge?.copyWith(
-                        fontWeight: isCurrent
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: isCurrent
-                            ? colorScheme.primary
-                            : colorScheme.onSurface,
+                    title: QueueSpoilerShield(
+                      hidden: !isCurrent,
+                      child: Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontWeight: isCurrent
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: isCurrent
+                              ? colorScheme.primary
+                              : colorScheme.onSurface,
+                        ),
                       ),
                     ),
-                    subtitle: Text(
-                      item.artist ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                    subtitle: QueueSpoilerShield(
+                      hidden: !isCurrent,
+                      child: Text(
+                        item.artist ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                     trailing: ReorderableDragStartListener(

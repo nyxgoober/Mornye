@@ -71,6 +71,7 @@ AppSettings _$AppSettingsFromJson(Map<String, dynamic> json) => AppSettings(
   exclusiveOutputDevice: json['exclusiveOutputDevice'] as String? ?? '',
   autoplay: json['autoplay'] as bool? ?? false,
   autoplayPersonalization: json['autoplayPersonalization'] as bool? ?? true,
+  hideQueueSpoilers: json['hideQueueSpoilers'] as bool? ?? false,
   songAnalysis: json['songAnalysis'] as bool? ?? false,
   songAnalysisOnlyWhileCharging:
       json['songAnalysisOnlyWhileCharging'] as bool? ?? true,
@@ -236,6 +237,7 @@ Map<String, dynamic> _$AppSettingsToJson(
   'exclusiveOutputDevice': instance.exclusiveOutputDevice,
   'autoplay': instance.autoplay,
   'autoplayPersonalization': instance.autoplayPersonalization,
+  'hideQueueSpoilers': instance.hideQueueSpoilers,
   'songAnalysis': instance.songAnalysis,
   'songAnalysisOnlyWhileCharging': instance.songAnalysisOnlyWhileCharging,
   'musicHaptics': instance.musicHaptics,

@@ -313,6 +313,12 @@ class SettingsSearchCatalog {
           keywords: const ['autoplay', 'queue', 'recommendation'],
         ),
         SettingsSearchEntry(
+          icon: Icons.blur_on,
+          title: l10n.hideQueueSpoilers,
+          subtitle: l10n.hideQueueSpoilersDescription,
+          keywords: const ['queue', 'spoiler', 'blur', 'hide', 'surprise'],
+        ),
+        SettingsSearchEntry(
           icon: Icons.auto_awesome_outlined,
           title: l10n.autoplayPersonalization,
           subtitle: l10n.autoplayPersonalizationDescription,

@@ -121,6 +121,10 @@ class AppSettings {
   final bool autoplay;
   final bool autoplayPersonalization;
 
+  /// Opening the queue shows grayscale, blurred artwork and blurred titles
+  /// for the songs still to come, so the next songs stay a surprise.
+  final bool hideQueueSpoilers;
+
   /// Analyze how each Library song sounds, on this device, so Autoplay picks
   /// songs that sound like the session. Off until turned on: decoding songs
   /// is heavy on low-end phones.
@@ -332,6 +336,7 @@ class AppSettings {
     this.exclusiveOutputDevice = '',
     this.autoplay = false,
     this.autoplayPersonalization = true,
+    this.hideQueueSpoilers = false,
     this.songAnalysis = false,
     this.songAnalysisOnlyWhileCharging = true,
     this.musicHaptics = false,
@@ -487,6 +492,7 @@ class AppSettings {
     String? exclusiveOutputDevice,
     bool? autoplay,
     bool? autoplayPersonalization,
+    bool? hideQueueSpoilers,
     bool? songAnalysis,
     bool? songAnalysisOnlyWhileCharging,
     bool? musicHaptics,
@@ -630,6 +636,7 @@ class AppSettings {
       autoplay: autoplay ?? this.autoplay,
       autoplayPersonalization:
           autoplayPersonalization ?? this.autoplayPersonalization,
+      hideQueueSpoilers: hideQueueSpoilers ?? this.hideQueueSpoilers,
       songAnalysis: songAnalysis ?? this.songAnalysis,
       songAnalysisOnlyWhileCharging:
           songAnalysisOnlyWhileCharging ?? this.songAnalysisOnlyWhileCharging,

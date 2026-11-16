@@ -8,6 +8,7 @@ import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/utils/desktop_platform.dart';
 import 'package:mornye/widgets/player_queue_artwork.dart';
 import 'package:mornye/widgets/player_queue_dismissible.dart';
+import 'package:mornye/widgets/queue_spoiler_shield.dart';
 
 /// Upcoming tracks share the player's artwork backdrop and transport controls.
 class MornyePlayerQueue extends ConsumerWidget {
@@ -246,25 +247,35 @@ class MornyePlayerQueue extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(5),
                       child: SizedBox.square(
                         dimension: 40,
-                        child: PlayerQueueArtwork(
-                          item: item,
-                          colorScheme: colorScheme,
-                          cacheWidth: 120,
-                          iconSize: 22,
+                        child: QueueSpoilerShield(
+                          grayscale: true,
+                          sigma: 8,
+                          child: PlayerQueueArtwork(
+                            item: item,
+                            colorScheme: colorScheme,
+                            cacheWidth: 120,
+                            iconSize: 22,
+                          ),
                         ),
                       ),
                     ),
-                    title: Text(
-                      item.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: type.bodyLarge?.copyWith(color: Colors.white),
+                    title: QueueSpoilerShield(
+                      child: Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: type.bodyLarge?.copyWith(color: Colors.white),
+                      ),
                     ),
-                    subtitle: Text(
-                      item.artist ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: type.bodySmall?.copyWith(color: Colors.white70),
+                    subtitle: QueueSpoilerShield(
+                      child: Text(
+                        item.artist ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: type.bodySmall?.copyWith(
+                          color: Colors.white70,
+                        ),
+                      ),
                     ),
                     trailing: ReorderableDragStartListener(
                       index: index,

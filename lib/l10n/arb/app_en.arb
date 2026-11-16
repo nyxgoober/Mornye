@@ -8293,6 +8293,8 @@
   "autoplayDescription": "Continue with related songs from your Library when the queue ends.",
   "autoplayPersonalization": "Personalized autoplay",
   "autoplayPersonalizationDescription": "Learn from songs you listen to and skip, privately on this device. Turning this off stops learning and restores ordinary autoplay.",
+  "hideQueueSpoilers": "Hide upcoming songs",
+  "hideQueueSpoilersDescription": "Blur the artwork and titles of upcoming songs in the queue so the next songs stay a surprise. Autoplay, shuffle and repeat controls stay clear.",
   "autoplayResetLearning": "Reset recommendation learning",
   "autoplayResetLearningConfirmTitle": "Reset recommendation learning?",
   "autoplayResetLearningConfirmMessage": "Autoplay forgets what it learned from your listening and skips. This can't be undone.",

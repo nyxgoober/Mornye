@@ -166,6 +166,10 @@ List<PlayableMedia> selectAutoplayTracks({
     pick.media,
 ];
 
+/// How many times the songs Autoplay needs are ranked when shuffle is on,
+/// before a random subset is queued.
+const _autoplayShufflePool = 4;
+
 /// Rank once per refill, so the visible queue is the actual playback order.
 /// Songs score by how well their genres fit the listening session (the
 /// seed, the songs before it and the queued ones, newest weighing most),
@@ -531,6 +535,10 @@ class _MusicAutoplay {
           ? runtime.ranker.weights
           : const <String, double>{};
       final revision = handler._sessionQueueRevision;
+      final wanted = 6 - upcoming.length;
+      // With shuffle on, rank a wider pool and sample from it below, so
+      // Autoplay is not a straight chain of the closest matches.
+      final poolSize = handler._shuffle ? wanted * _autoplayShufflePool : wanted;
       List<AutoplayPick> ordinaryRanking() => rankAutoplayTracks(
         seed: current,
         candidates: candidates,
@@ -538,7 +546,7 @@ class _MusicAutoplay {
         recent: recent,
         dismissedSources: _dismissed,
         random: handler._random,
-        limit: 6 - upcoming.length,
+        limit: poolSize,
       );
       List<AutoplayPick> selected;
       if (model == null && signals.isEmpty && weights.isEmpty) {
@@ -558,7 +566,7 @@ class _MusicAutoplay {
               weights: weights,
               randomSeed: handler._random.nextInt(1 << 31),
               at: DateTime.now(),
-              limit: 6 - upcoming.length,
+              limit: poolSize,
             ),
             debugLabel: 'autoplay-ranking',
           );
@@ -580,6 +588,16 @@ class _MusicAutoplay {
         return;
       }
       if (selected.isEmpty) return;
+      if (handler._shuffle && selected.length > wanted) {
+        // A random subset of the pool. Keeping the ranked order of the
+        // survivors keeps the artist gaps the ranking already enforced.
+        final keep = (List.generate(selected.length, (i) => i)
+              ..shuffle(handler._random))
+            .take(wanted)
+            .toList()
+          ..sort();
+        selected = [for (final i in keep) selected[i]];
+      }
       // How the listener takes each pick teaches the weights.
       if (learning) {
         for (final pick in selected) {

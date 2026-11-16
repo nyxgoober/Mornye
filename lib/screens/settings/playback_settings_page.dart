@@ -295,6 +295,15 @@ class _PlaybackSettingsPageState extends ConsumerState<PlaybackSettingsPage>
                     .read(settingsProvider.notifier)
                     .setAutoplayPersonalization(value),
               ),
+              SettingsSwitchItem(
+                icon: Icons.blur_on,
+                title: context.l10n.hideQueueSpoilers,
+                subtitle: context.l10n.hideQueueSpoilersDescription,
+                value: settings.hideQueueSpoilers,
+                onChanged: (value) => ref
+                    .read(settingsProvider.notifier)
+                    .setHideQueueSpoilers(value),
+              ),
               if (settings.autoplayPersonalization)
                 SettingsItem(
                   icon: Icons.restart_alt,
