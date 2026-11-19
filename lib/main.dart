@@ -5,8 +5,9 @@ import 'package:mornye/services/audio_file_open_service.dart';
 import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart'
+    show SystemChrome, SystemUiMode, rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,6 +43,8 @@ import 'package:mornye/services/link/desktop/link_phone_playback.dart';
 import 'package:mornye/services/link/features/link_phone_features.dart';
 import 'package:mornye/services/link/features/link_remote_playback.dart';
 import 'package:mornye/services/link/link_client_api.dart';
+import 'package:mornye/services/link/link_source_presence.dart';
+import 'package:mornye/services/link/together/link_together_controller.dart';
 import 'package:mornye/services/music_player_service.dart';
 import 'package:mornye/services/playback_notification.dart';
 import 'package:mornye/services/player_widget_service.dart';
@@ -54,11 +57,34 @@ import 'package:mornye/widgets/desktop/desktop_commands.dart'
     show restoreDesktopSidebar;
 import 'package:mornye/widgets/desktop/desktop_inspector.dart'
     show bindDesktopFullScreenLyrics;
+import 'package:mornye/widgets/desktop/desktop_wheel_smoother.dart';
 import 'package:mornye/widgets/desktop/desktop_window.dart'
     show listenDesktopWindowFullScreen;
 
 final _log = AppLogger('Main');
 _StartupBenchmark? _startupBenchmark;
+
+/// Desktop binding: eases mouse wheel notches before they reach the
+/// scrollables (see [DesktopWheelSmoother]).
+class _DesktopBinding extends WidgetsFlutterBinding {
+  static _DesktopBinding? _instance;
+
+  static WidgetsBinding ensureInitialized() => _instance ??= _DesktopBinding();
+
+  late final _wheel = DesktopWheelSmoother.forBinding(
+    this,
+    dispatch: _handlePointerEvent,
+  );
+
+  void _handlePointerEvent(PointerEvent event) =>
+      super.handlePointerEvent(event);
+
+  @override
+  void handlePointerEvent(PointerEvent event) {
+    if (_wheel.handlePointerEvent(event)) return;
+    super.handlePointerEvent(event);
+  }
+}
 
 void main() {
   if (const bool.fromEnvironment('CORE_BACKEND_STARTUP_BENCHMARK')) {
@@ -68,7 +94,9 @@ void main() {
   // Native backend crashes still can't be caught here.
   runZonedGuarded(
     () async {
-      final binding = WidgetsFlutterBinding.ensureInitialized();
+      final binding = isDesktopPlatform && kDesktopWheelSmoothing
+          ? _DesktopBinding.ensureInitialized()
+          : WidgetsFlutterBinding.ensureInitialized();
       // The preferences plugin answers without an Activity, so on Android
       // the load overlaps the Activity's creation.
       final preferences = SharedPreferences.getInstance();
@@ -82,6 +110,9 @@ void main() {
           unawaited(_startBackgroundPlayback());
         }
         await waitForActivityAttachment(binding);
+        // Android 15 and later enforce this; older versions stop the app
+        // above the navigation bar, so no screen could reach the bottom edge.
+        unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
       }
       // Asked after attachment, so an app a media browser started long
       // before it opens still reads the current wallpaper colors.
@@ -118,6 +149,10 @@ void main() {
           'rusqlite',
           'roxmltree',
         ], await rootBundle.loadString('assets/licenses/native_data_jobs.txt'));
+        yield LicenseEntryWithLineBreaks(const [
+          'Unihan (Unicode Han Database)',
+          'phrase-pinyin-data',
+        ], await rootBundle.loadString('assets/licenses/romanization.txt'));
         yield LicenseEntryWithLineBreaks(const [
           'FFmpeg',
         ], await rootBundle.loadString('assets/licenses/ffmpeg.txt'));
@@ -214,12 +249,23 @@ void main() {
                   ref.watch(linkRemotePlaybackProvider) ??
                   ref.watch(linkFollowedPhonePlaybackProvider),
             ),
+            // Playing together, this phone sounds while its screens show
+            // the computer: its volume controls stay its own.
+            soundsBesideRemoteProvider.overrideWith(
+              (ref) => ref.watch(
+                linkPlayTogetherProvider.select((state) => state.active),
+              ),
+            ),
             // Also while songs transfer, so the computer can still ask for
-            // this phone's files and hear how a transfer stands.
+            // this phone's files and hear how a transfer stands, and while
+            // the two play together.
             linkKeepConnectedProvider.overrideWith(
               (ref) =>
                   ref.watch(linkRemotePlaybackProvider) != null ||
-                  ref.watch(linkPhoneTransfersActiveProvider),
+                  ref.watch(linkPhoneTransfersActiveProvider) ||
+                  ref.watch(
+                    linkPlayTogetherProvider.select((state) => state.active),
+                  ),
             ),
           ],
           child: EagerInitialization(
@@ -583,6 +629,7 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      _logRefreshRate();
       _verificationNotificationSubscription =
           PlatformBridge.verificationNotificationEvents().listen(
             (_) => unawaited(_consumeVerificationNotification()),
@@ -598,6 +645,8 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
         bindDesktopFullScreenLyrics();
         // Starts the Mornye Link server when the owner turned it on.
         ref.read(linkDesktopHostProvider);
+        // Hides a phone's songs while it is not connected.
+        ref.read(linkSourcePresenceProvider);
       }
       _initializeAppServices();
       _initializeExtensions();
@@ -622,26 +671,43 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
   }
 
   @override
+  void didChangeMetrics() => _logRefreshRate();
+
+  double? _loggedRefreshRate;
+
+  /// Notes the refresh rate the device gives the app, each time it changes,
+  /// so a report of choppy motion shows whether the phone held the app at
+  /// 60 Hz.
+  void _logRefreshRate() {
+    if (!mounted) return;
+    final rate = View.maybeOf(context)?.display.refreshRate;
+    if (rate == null || rate == _loggedRefreshRate) return;
+    _loggedRefreshRate = rate;
+    _log.i('Display refresh rate: ${rate.toStringAsFixed(0)} Hz');
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _logRefreshRate();
       unawaited(_consumeVerificationNotification());
       CoverCacheManager.scheduleMaintenance();
       // Native downloads can finish while Flutter is suspended. Refresh the
       // persisted history even when no queued item remains to reconcile.
-      if (ref.exists(downloadHistoryProvider)) {
+      if (ref.read(downloadHistoryProvider.exists)) {
         unawaited(
           ref.read(downloadHistoryProvider.notifier).refreshFromStorage(),
         );
       }
       _maybeAutoScanLocalLibrary();
-      if (ref.exists(localLibraryProvider)) {
+      if (ref.read(localLibraryProvider.exists)) {
         unawaited(
           ref
               .read(localLibraryProvider.notifier)
               .refreshSourceAvailability(scanReconnected: true),
         );
       }
-      if (ref.exists(downloadQueueProvider)) {
+      if (ref.read(downloadQueueProvider.exists)) {
         ref
             .read(downloadQueueProvider.notifier)
             .resumePendingDownloadsOnForeground();
@@ -650,7 +716,7 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
       CoverCacheManager.stopMaintenance();
       // Last reliable moment before the OS may kill the process: make sure
       // any debounced download-queue persistence reaches disk.
-      if (ref.exists(downloadQueueProvider)) {
+      if (ref.read(downloadQueueProvider.exists)) {
         unawaited(
           ref
               .read(downloadQueueProvider.notifier)
@@ -660,7 +726,6 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
               }),
         );
       }
-      // Backgrounded: release idle native runtimes and connections.
       unawaited(PlatformBridge.releaseNativeMemory());
     }
   }
@@ -715,7 +780,7 @@ class _EagerInitializationState extends ConsumerState<EagerInitialization>
   void _updateDesktopLibraryWatcher() {
     if (!isDesktopPlatform || !mounted) return;
     if (!_desktopLibraryWatchEnabled(ref.read(settingsProvider)) ||
-        !ref.exists(localLibraryProvider)) {
+        !ref.read(localLibraryProvider.exists)) {
       _stopDesktopLibraryWatcher();
       return;
     }

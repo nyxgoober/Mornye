@@ -1,8 +1,8 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mornye/l10n/l10n.dart';
-import 'package:mornye/providers/music_player_provider.dart';
+import 'package:mornye/providers/playback_provider.dart';
 import 'package:mornye/providers/local_library_provider.dart';
 import 'package:mornye/providers/network_upload_provider.dart';
 import 'package:mornye/providers/settings_provider.dart';
@@ -24,6 +24,8 @@ import 'package:mornye/widgets/app_loading_indicator.dart';
 import 'package:mornye/widgets/app_progress_indicator.dart';
 import 'package:mornye/widgets/expressive_button.dart';
 import 'package:mornye/widgets/expressive_icon_button.dart';
+import 'package:mornye/widgets/link/link_transfer_tile.dart';
+import 'package:mornye/widgets/network_upload_actions.dart';
 import 'package:mornye/widgets/settings_group.dart';
 
 class NetworkStorageScreen extends ConsumerStatefulWidget {
@@ -219,8 +221,7 @@ class _NetworkStorageScreenState extends ConsumerState<NetworkStorageScreen> {
 
   Future<void> _edit([NetworkConnection? connection]) async {
     await Navigator.of(context).push(
-      _networkRoute<void>(
-        context,
+      MaterialPageRoute<void>(
         builder: (_) =>
             _NetworkConnectionForm(service: service, connection: connection),
       ),
@@ -236,8 +237,7 @@ class _NetworkStorageScreenState extends ConsumerState<NetworkStorageScreen> {
     String? displayName,
   ]) async {
     final picked = await Navigator.of(context).push(
-      _networkRoute<String>(
-        context,
+      MaterialPageRoute<String>(
         builder: (_) => NetworkStorageScreen(
           connection: connection,
           path: path,
@@ -269,37 +269,54 @@ class _NetworkStorageScreenState extends ConsumerState<NetworkStorageScreen> {
                 }.contains(e.name.toLowerCase()),
           )
           .firstOrNull;
-      await ref.read(musicPlayerControllerProvider).playAll([
-        for (final entry in tracks)
-          PlayableMedia(
-            id: NetworkStorageService.source(connection.id, entry.path),
-            source: NetworkStorageService.source(connection.id, entry.path),
-            title:
-                entry.song?.title ??
-                entry.name.replaceFirst(RegExp(r'\.[^.]+$'), ''),
-            artist: entry.song?.artist ?? connection.name,
-            album:
-                entry.song?.album ??
-                widget.path.split('/').where((p) => p.isNotEmpty).lastOrNull ??
-                '',
-            networkArtworkSource: entry.song?.coverPath != null
-                ? NetworkStorageService.source(
+      await ref
+          .read(playbackProvider.notifier)
+          .playMediaQueue(
+            [
+              for (final entry in tracks)
+                PlayableMedia(
+                  id: NetworkStorageService.source(connection.id, entry.path),
+                  source: NetworkStorageService.source(
                     connection.id,
-                    entry.song!.coverPath!,
-                  )
-                : cover == null
-                ? null
-                : NetworkStorageService.source(connection.id, cover.path),
-            format: entry.extension,
-            duration: entry.song?.metadata['duration'] is int
-                ? Duration(seconds: entry.song!.metadata['duration'] as int)
-                : null,
-            bitDepth: entry.song?.metadata['bit_depth'] as int?,
-            sampleRate: entry.song?.metadata['sample_rate'] as int?,
-            bitrate: entry.song?.metadata['bitrate'] as int?,
-            explicit: entry.song?.metadata['explicit'] == true,
-          ),
-      ], initialIndex: tracks.indexOf(selected));
+                    entry.path,
+                  ),
+                  title:
+                      entry.song?.title ??
+                      entry.name.replaceFirst(RegExp(r'\.[^.]+$'), ''),
+                  artist: entry.song?.artist ?? connection.name,
+                  album:
+                      entry.song?.album ??
+                      widget.path
+                          .split('/')
+                          .where((p) => p.isNotEmpty)
+                          .lastOrNull ??
+                      '',
+                  networkArtworkSource: entry.song?.coverPath != null
+                      ? NetworkStorageService.source(
+                          connection.id,
+                          entry.song!.coverPath!,
+                        )
+                      : cover == null
+                      ? null
+                      : NetworkStorageService.source(connection.id, cover.path),
+                  format: entry.extension,
+                  duration: entry.song?.metadata['duration'] is int
+                      ? Duration(
+                          seconds: entry.song!.metadata['duration'] as int,
+                        )
+                      : null,
+                  bitDepth: entry.song?.metadata['bit_depth'] as int?,
+                  sampleRate: entry.song?.metadata['sample_rate'] as int?,
+                  bitrate: entry.song?.metadata['bitrate'] as int?,
+                  explicit: entry.song?.metadata['explicit'] == true,
+                ),
+            ],
+            startIndex: tracks.indexOf(selected),
+            externalPath: NetworkStorageService.source(
+              connection.id,
+              selected.path,
+            ),
+          );
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -374,6 +391,8 @@ class _NetworkStorageScreenState extends ConsumerState<NetworkStorageScreen> {
                       ),
                     ),
                   ),
+                if (connection == null && !widget.pickUploadFolder)
+                  const SliverToBoxAdapter(child: _NetworkUploadStatus()),
                 if (_loading || _starting)
                   SliverToBoxAdapter(child: _NetworkProgress()),
                 if (!_loading &&
@@ -662,6 +681,7 @@ class _NetworkConnectionFormState extends State<_NetworkConnectionForm> {
   late final _apiKey = TextEditingController(text: widget.connection?.apiKey);
   late var _auth = widget.connection?.subsonicAuth ?? SubsonicAuth.saltedToken;
   late var _protocol = widget.connection?.protocol ?? NetworkProtocol.smb;
+  late var _smbEncrypt = widget.connection?.smbEncrypt ?? false;
   late String? _trustedCertificate =
       widget.connection?.trustedCertificateSha256;
   late String? _trustedOrigin = widget.connection?.root.scheme == 'https'
@@ -713,6 +733,7 @@ class _NetworkConnectionFormState extends State<_NetworkConnectionForm> {
             ? ''
             : _password.text,
         domain: _domain.text.trim(),
+        smbEncrypt: _protocol == NetworkProtocol.smb && _smbEncrypt,
         subsonicAuth: _auth,
         apiKey:
             _protocol == NetworkProtocol.subsonic &&
@@ -989,6 +1010,16 @@ class _NetworkConnectionFormState extends State<_NetworkConnectionForm> {
                       if (_protocol == NetworkProtocol.smb)
                         _field(_domain, context.l10n.networkDomain),
                       const SizedBox(height: 12),
+                      if (_protocol == NetworkProtocol.smb)
+                        SettingsSwitchItem(
+                          title: context.l10n.networkSmbEncrypt,
+                          subtitle: context.l10n.networkSmbEncryptDescription,
+                          value: _smbEncrypt,
+                          enabled: !_busy,
+                          showDivider: false,
+                          onChanged: (value) =>
+                              setState(() => _smbEncrypt = value),
+                        ),
                     ],
                   ),
                   Padding(
@@ -1074,13 +1105,6 @@ class _NetworkConnectionFormState extends State<_NetworkConnectionForm> {
   );
 }
 
-PageRoute<T> _networkRoute<T>(
-  BuildContext context, {
-  required WidgetBuilder builder,
-}) => context.isMornye
-    ? CupertinoPageRoute<T>(builder: builder)
-    : MaterialPageRoute<T>(builder: builder);
-
 /// Browses [connection] for a folder to upload into: the folder's
 /// `network://` source, or null when the person goes back.
 Future<String?> browseNetworkUploadFolder(
@@ -1088,8 +1112,7 @@ Future<String?> browseNetworkUploadFolder(
   NetworkConnection connection, {
   NetworkStorageService? service,
 }) => Navigator.of(context).push(
-  _networkRoute<String>(
-    context,
+  MaterialPageRoute<String>(
     builder: (_) => NetworkStorageScreen(
       connection: connection,
       service: service,
@@ -1165,6 +1188,60 @@ class _NetworkIconAction extends StatelessWidget {
           tooltip: tooltip,
           onPressed: onPressed,
         );
+}
+
+/// The running upload of Library songs with its progress, which opens the
+/// progress sheet again, or how the last one ended until it is cleared.
+class _NetworkUploadStatus extends ConsumerWidget {
+  const _NetworkUploadStatus();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(networkUploadProvider);
+    if (status == null) return const SizedBox.shrink();
+    final l10n = context.l10n;
+    final progress = status.progress;
+    final result = status.result;
+    final failed = !status.running && (result == null || result.failed > 0);
+    return SettingsGroup(
+      children: [
+        SettingsItem(
+          key: const ValueKey('network-upload-status'),
+          icon: status.running || (result?.cancelled ?? false)
+              ? Icons.cloud_upload_outlined
+              : failed
+              ? Icons.error_outline
+              : Icons.check_circle_outline,
+          iconColor: failed ? Theme.of(context).colorScheme.error : null,
+          showIconInMornye: true,
+          title: status.running
+              ? l10n.networkUploading
+              : l10n.networkUploadLast,
+          subtitle: status.running
+              ? [
+                  '${progress.done} / ${progress.total}',
+                  if (progress.title.isNotEmpty) progress.title,
+                ].join(' · ')
+              : networkUploadOutcome(l10n, result: result, error: status.error),
+          footer: status.running
+              ? LinkTransferProgressBar(value: progress.fraction)
+              : null,
+          onTap: status.running
+              ? () => showNetworkUploadProgress(context)
+              : null,
+          trailing: status.running
+              ? null
+              : _NetworkIconAction(
+                  tooltip: l10n.dialogClear,
+                  onPressed: ref.read(networkUploadProvider.notifier).clear,
+                  icon: Icons.close,
+                  cupertinoIcon: CupertinoIcons.xmark,
+                ),
+          showDivider: false,
+        ),
+      ],
+    );
+  }
 }
 
 class _NetworkProgress extends StatelessWidget {

@@ -50,6 +50,6 @@ class QueueSpoilerShield extends ConsumerWidget {
       shielded = ColorFiltered(colorFilter: _gray, child: shielded);
     }
     // Screen readers must not read out what the blur hides.
-    return ExcludeSemantics(child: ClipRect(child: shielded));
+    return ExcludeSemantics(child: shielded);
   }
 }

@@ -1,17 +1,21 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:mornye/l10n/l10n.dart';
 import 'package:mornye/providers/music_player_provider.dart';
+import 'package:mornye/providers/settings_provider.dart';
 import 'package:mornye/theme/app_motion.dart';
 import 'package:mornye/theme/material_expressive.dart';
 import 'package:mornye/widgets/app_bottom_sheet.dart';
 import 'package:mornye/widgets/app_icon.dart';
+import 'package:mornye/widgets/app_snack_bar.dart';
 import 'package:mornye/widgets/expressive_button.dart';
+import 'package:mornye/widgets/expressive_icon_button.dart';
 import 'package:mornye/widgets/player_playback_controls.dart';
 import 'package:mornye/widgets/player_queue_artwork.dart';
 import 'package:mornye/widgets/player_queue_dismissible.dart';
 import 'package:mornye/widgets/queue_spoiler_shield.dart';
+import 'package:mornye/widgets/queue_swipe.dart';
 
 Future<void> showPlayerQueueSheet(
   BuildContext context,
@@ -26,14 +30,22 @@ Future<void> showPlayerQueueSheet(
     initialChildSize: 0.6,
     maxChildSize: 0.9,
     minChildSize: 0.4,
-    builder: (context, scrollController) => PlayerQueueSheet(
-      colorScheme: colorScheme,
-      scrollController: scrollController,
+    // The sheet's own messenger, so a swipe's confirmation shows over the
+    // sheet instead of behind it.
+    builder: (context, scrollController) => AppScaffoldMessenger(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        resizeToAvoidBottomInset: false,
+        body: PlayerQueueSheet(
+          colorScheme: colorScheme,
+          scrollController: scrollController,
+        ),
+      ),
     ),
   ),
 );
 
-class PlayerQueueSheet extends ConsumerWidget {
+class PlayerQueueSheet extends ConsumerStatefulWidget {
   const PlayerQueueSheet({
     super.key,
     required this.colorScheme,
@@ -49,14 +61,67 @@ class PlayerQueueSheet extends ConsumerWidget {
   /// keeps the panel open.
   final bool embedded;
 
+  @override
+  ConsumerState<PlayerQueueSheet> createState() => _PlayerQueueSheetState();
+}
+
+class _PlayerQueueSheetState extends ConsumerState<PlayerQueueSheet> {
   static const _rowRadius = 16.0;
   static final _liftSpring = SpringCurve(M3EMotion.expressiveSpatialFast);
 
+  /// Measures the first row until the list has opened at the playing song.
+  GlobalKey? _firstRowKey = GlobalKey();
+  bool _openScheduled = false;
+
+  /// While the list jumps to the playing song, the rows before this index
+  /// are empty boxes [_passedRowHeight] tall: a list without fixed row
+  /// heights builds every row it passes, and none of these reach the screen.
+  int _passedRows = 0;
+  double _passedRowHeight = 0;
+
+  /// Opens the list at the playing song, with the song before it still in
+  /// view, once and without motion, so a later song change never moves it.
+  void _openAtPlayingSong() {
+    if (_openScheduled) return;
+    _openScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final rowHeight = _firstRowKey?.currentContext?.size?.height;
+      final index = ref.read(currentQueueIndexProvider);
+      final scroll = widget.scrollController;
+      if (rowHeight != null && index > 1 && scroll.hasClients) {
+        final position = scroll.position;
+        final offset = ((index - 1) * rowHeight).clamp(
+          0.0,
+          position.maxScrollExtent,
+        );
+        if (offset > position.pixels) {
+          // One row of margin above the first one the jump shows.
+          _passedRows = (offset / rowHeight).floor() - 1;
+          _passedRowHeight = rowHeight;
+          scroll.jumpTo(offset);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _passedRows = 0;
+            // Rows kept just above the viewport become real ones.
+            if (mounted) setState(() {});
+          });
+        }
+      }
+      setState(() => _firstRowKey = null);
+    });
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final colorScheme = widget.colorScheme;
+    final embedded = widget.embedded;
     final queue = ref.watch(playQueueProvider).value ?? const [];
     final current = ref.watch(currentMediaItemProvider).value;
+    if (queue.isNotEmpty && current != null) _openAtPlayingSong();
     final controller = ref.read(musicPlayerControllerProvider);
+    // Locked: no reordering or swiping songs away here; adding still works.
+    final locked = ref.watch(settingsProvider.select((s) => s.queueLocked));
+    final swipeToPlayNext = queueEntrySwipeEnabled(ref);
     final textTheme = Theme.of(context).textTheme;
     final expressive = materialExpressiveEnabled(context);
     final artworkMotion = AppMotion.spatial(
@@ -80,6 +145,20 @@ class PlayerQueueSheet extends ConsumerWidget {
                         ),
                       ),
               ),
+              ExpressiveIconButton(
+                selected: locked,
+                tooltip: locked
+                    ? context.l10n.queueUnlock
+                    : context.l10n.queueLock,
+                icon: Icon(locked ? Icons.lock : Icons.lock_open),
+                foregroundColor: locked
+                    ? colorScheme.onSecondaryContainer
+                    : colorScheme.onSurfaceVariant,
+                backgroundColor: locked ? colorScheme.secondaryContainer : null,
+                onPressed: () =>
+                    ref.read(settingsProvider.notifier).setQueueLocked(!locked),
+              ),
+              const SizedBox(width: 4),
               PlayerPlaybackModeButton(
                 mode: PlayerPlaybackMode.autoplay,
                 colorScheme: colorScheme,
@@ -126,11 +205,12 @@ class PlayerQueueSheet extends ConsumerWidget {
         else
           Expanded(
             child: ReorderableListView.builder(
-              scrollController: scrollController,
+              scrollController: widget.scrollController,
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 24),
               itemCount: queue.length,
+              buildDefaultDragHandles: !locked,
               onReorderItem: (oldIndex, newIndex) {
-                controller.moveQueueItem(oldIndex, newIndex);
+                if (!locked) controller.moveQueueItem(oldIndex, newIndex);
               },
               proxyDecorator: (child, index, animation) {
                 if (!expressive) {
@@ -161,40 +241,49 @@ class PlayerQueueSheet extends ConsumerWidget {
               },
               itemBuilder: (context, i) {
                 final item = queue[i];
+                if (i < _passedRows) {
+                  return SizedBox(
+                    key: ObjectKey(item),
+                    height: _passedRowHeight,
+                  );
+                }
                 final isCurrent = current?.id == item.id;
                 return PlayerQueueDismissible(
                   key: ObjectKey(item),
-                  enabled: !isCurrent,
+                  enabled: !isCurrent && !locked,
                   onRemove: () => controller.removeQueuedItem(item),
-                  child: ListTile(
-                    selected: isCurrent,
-                    selectedTileColor: colorScheme.secondaryContainer
-                        .withValues(alpha: 0.55),
-                    shape: expressive
-                        ? RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(_rowRadius),
-                          )
-                        : null,
-                    contentPadding: const EdgeInsetsDirectional.only(
-                      start: 16,
-                      end: 4,
-                    ),
-                    leading: TweenAnimationBuilder<double>(
-                      tween: Tween(end: expressive && isCurrent ? 22 : 8),
-                      duration: artworkMotion.duration,
-                      curve: artworkMotion.curve,
-                      builder: (context, radius, child) => ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          radius.clamp(0.0, 22.0),
-                        ),
-                        child: child,
+                  playNext: swipeToPlayNext
+                      ? queueEntrySwipe(controller, item)
+                      : null,
+                  child: QueueSpoilerShield(
+                    hidden: !isCurrent,
+                    grayscale: true,
+                    child: ListTile(
+                      key: i == 0 ? _firstRowKey : null,
+                      selected: isCurrent,
+                      selectedTileColor: colorScheme.secondaryContainer
+                          .withValues(alpha: 0.55),
+                      shape: expressive
+                          ? RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(_rowRadius),
+                            )
+                          : null,
+                      contentPadding: const EdgeInsetsDirectional.only(
+                        start: 16,
+                        end: 4,
                       ),
-                      child: SizedBox.square(
-                        dimension: 44,
-                        child: QueueSpoilerShield(
-                          hidden: !isCurrent,
-                          grayscale: true,
-                          sigma: 8,
+                      leading: TweenAnimationBuilder<double>(
+                        tween: Tween(end: expressive && isCurrent ? 22 : 8),
+                        duration: artworkMotion.duration,
+                        curve: artworkMotion.curve,
+                        builder: (context, radius, child) => ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            radius.clamp(0.0, 22.0),
+                          ),
+                          child: child,
+                        ),
+                        child: SizedBox.square(
+                          dimension: 44,
                           child: PlayerQueueArtwork(
                             item: item,
                             colorScheme: colorScheme,
@@ -203,10 +292,7 @@ class PlayerQueueSheet extends ConsumerWidget {
                           ),
                         ),
                       ),
-                    ),
-                    title: QueueSpoilerShield(
-                      hidden: !isCurrent,
-                      child: Text(
+                      title: Text(
                         item.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -219,10 +305,7 @@ class PlayerQueueSheet extends ConsumerWidget {
                               : colorScheme.onSurface,
                         ),
                       ),
-                    ),
-                    subtitle: QueueSpoilerShield(
-                      hidden: !isCurrent,
-                      child: Text(
+                      subtitle: Text(
                         item.artist ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -230,19 +313,21 @@ class PlayerQueueSheet extends ConsumerWidget {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      trailing: locked
+                          ? null
+                          : ReorderableDragStartListener(
+                              index: i,
+                              // 24dp glyph plus padding gives a 48dp drag target.
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: AppIcon(
+                                  Icons.drag_handle,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                      onTap: () => controller.jumpTo(i),
                     ),
-                    trailing: ReorderableDragStartListener(
-                      index: i,
-                      // 24dp glyph plus padding gives a 48dp drag target.
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: AppIcon(
-                          Icons.drag_handle,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    onTap: () => controller.jumpTo(i),
                   ),
                 );
               },
@@ -264,7 +349,9 @@ class PlayerQueueSheet extends ConsumerWidget {
         );
         return;
       }
-      if (context.mounted && !embedded) Navigator.of(context).maybePop();
+      if (context.mounted && !widget.embedded) {
+        Navigator.of(context).maybePop();
+      }
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

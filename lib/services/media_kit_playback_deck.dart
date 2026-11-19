@@ -14,7 +14,6 @@ import 'package:mornye/utils/logger.dart';
 
 final _log = AppLogger('MediaKitDeck');
 
-/// An error-level line from libmpv's log.
 typedef MpvLogError = ({String prefix, String text});
 
 /// The libmpv operations [MediaKitPlaybackDeck] uses. [MediaKitEngine] is the
@@ -53,7 +52,6 @@ abstract interface class MpvPlaylistEngine implements MpvEngine {
   Future<void> clearNext();
 }
 
-/// One libmpv instance through media_kit.
 class MediaKitEngine implements MpvEngine, MpvPlaylistEngine {
   MediaKitEngine()
     : _player = NativePlayer(
@@ -70,10 +68,10 @@ class MediaKitEngine implements MpvEngine, MpvPlaylistEngine {
       // Mornye reads sidecar lyrics itself. A failed mpv subtitle autoload
       // must not turn an otherwise playable song into a source error.
       setProperty('sub-auto', 'no'),
-      // Some WASAPI devices glitch after a stream reset at their default
-      // period. Let the driver choose its minimum and align the buffer.
+      // Music playback needs scheduling headroom rather than the shortest
+      // device period, which can underrun on otherwise working endpoints.
       if (defaultTargetPlatform == TargetPlatform.windows)
-        setProperty('wasapi-exclusive-buffer', 'min'),
+        setProperty('wasapi-exclusive-buffer', 'default'),
       // Until a successor is queued, EOF must wait for the output to drain.
       setProperty('gapless-audio', 'no'),
       // Room for an equalizer preamp of +12 dB applied through the volume
@@ -213,7 +211,6 @@ class MediaKitEngine implements MpvEngine, MpvPlaylistEngine {
   }
 }
 
-/// A source libmpv could not open.
 class MediaKitSourceException implements Exception {
   const MediaKitSourceException(this.message);
   final String message;
@@ -223,7 +220,9 @@ class MediaKitSourceException implements Exception {
 }
 
 /// The Windows and Linux deck: one libmpv player through media_kit, with the
-/// equalizer as an mpv audio filter chain.
+/// equalizer as an mpv audio filter chain. [playbackSpeed] and
+/// [playbackPitch] apply through mpv's speed and the same chain (see
+/// [MpvTempo]).
 ///
 /// Gapless uses the native playlist on this same output, including exclusive
 /// mode. AutoMix still owns separate decks while it is enabled.
@@ -231,6 +230,8 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
   MediaKitPlaybackDeck({required this.playerId, MpvEngine? engine})
     : _engine = engine ?? debugEngineFactory?.call() ?? MediaKitEngine() {
     playbackEqualizer.addListener(_equalizerChanged);
+    playbackSpeed.addListener(_equalizerChanged);
+    playbackPitch.addListener(_equalizerChanged);
     playbackOutputVolume.addListener(_outputVolumeChanged);
     playbackExclusiveOutput.addListener(_exclusiveChanged);
     playbackExclusiveDevice.addListener(_exclusiveChanged);
@@ -259,7 +260,9 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
       }),
       _engine.errors.listen(_onError),
     ]);
-    _equalizerChanged();
+    // At once, so a source opened right away already plays at the current
+    // speed and pitch.
+    _equalizerWrite = _syncEqualizer();
   }
 
   final String playerId;
@@ -267,7 +270,6 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
 
   static bool? _available;
 
-  /// Overrides [isAvailable] in tests.
   @visibleForTesting
   static bool? debugAvailableOverride;
 
@@ -317,28 +319,41 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
   /// The output property as last set; null before the first set.
   ({String name, String value})? _output;
 
-  /// Whether [_output] is the exclusive one.
   bool _exclusive = false;
   int? _sampleRate;
 
   /// The `af` value libmpv accepted last, null when unknown.
   String? _appliedSpec;
+
+  /// The last `af` value with a semitone shift that libmpv refused.
+  String? _rejectedSpec;
   double _chainGainDb = 0;
+
+  /// The rate [setPlaybackRate] gave, before [playbackSpeed].
+  double _rate = 1;
+
+  /// mpv's `speed` and `audio-pitch-correction` as last set (its defaults
+  /// until then).
+  double _speed = 1;
+  bool _pitchCorrection = true;
+
+  bool _pitchFailed = false;
 
   /// Optional filters this process's libmpv lacks, found by probing once.
   static final _missingFilters = <String>{};
   static Future<void>? _probe;
+  static Future<void>? _tempoProbe;
 
   @visibleForTesting
   static void debugResetMissingFilters() {
     _missingFilters.clear();
     _probe = null;
+    _tempoProbe = null;
   }
 
   Timer? _equalizerTimer;
   Future<void> _equalizerWrite = Future.value();
 
-  /// Reads an mpv property of this deck's player, for integration tests.
   @visibleForTesting
   Future<String> debugProperty(String name) => _engine.getProperty(name);
 
@@ -348,6 +363,9 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
   bool get isDirect => false;
   @override
   bool get needsSourceReload => false;
+  @override
+  PlaybackTempoSupport get tempoSupport =>
+      _pitchFailed ? PlaybackTempoSupport.speedOnly : PlaybackTempoSupport.full;
   @override
   Stream<PlaybackDeckState> get onPlayerStateChanged => _states.stream;
   @override
@@ -466,6 +484,20 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
       // including the filter probes of _probeFilters.
       if (_isRejectedFilterValue(error)) return;
       _log.w('mpv ${error.prefix}: ${error.text}');
+      if (error.text.contains('mornye_tempo')) {
+        // The speed a shift through scaletempo set needs that filter; play
+        // the unshifted speed instead and keep this chain from returning.
+        _rejectedSpec = _appliedSpec;
+        _setPitchFailed(true);
+        final unshifted = _tempoFor(
+          PlaybackPitch(followsRate: playbackPitch.value.followsRate),
+        );
+        _equalizerWrite = _equalizerWrite.then(
+          (_) => _applyTempo(
+            unshifted,
+          ).catchError((Object error) => _log.w('Unshifted speed: $error')),
+        );
+      }
       // mpv disabled the filter; the next change sets the chain again.
       _appliedSpec = null;
       if (playbackEqualizer.value.enabled) {
@@ -619,8 +651,16 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
     );
   }
 
+  /// Applies at once, through the same serialized write as the filters: a
+  /// semitone shift without `rubberband` changes the chain with the speed.
   @override
-  Future<void> setPlaybackRate(double rate) => _engine.setSpeed(rate);
+  Future<void> setPlaybackRate(double rate) {
+    if (rate <= 0) return Future.value();
+    _rate = rate;
+    _equalizerTimer?.cancel();
+    _equalizerTimer = null;
+    return _equalizerWrite = _equalizerWrite.then((_) => _syncEqualizer());
+  }
 
   @override
   Future<void> setNetworkSource(String url, {bool arriving = false}) =>
@@ -721,7 +761,8 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
   Future<Duration?> getDuration() async => _duration;
 
   void _equalizerChanged() {
-    // Every change sets the chain again, so slider drags coalesce.
+    // Every change sets the chain again, so slider drags coalesce. Speed and
+    // pitch changes take the same path, since a shift lives in the chain.
     _equalizerTimer ??= Timer(const Duration(milliseconds: 80), () {
       _equalizerTimer = null;
       _equalizerWrite = _equalizerWrite.then((_) => _syncEqualizer());
@@ -745,10 +786,54 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
       }
     }
     await _engine.setProperty('af', '');
+    _appliedSpec = '';
     if (_missingFilters.isNotEmpty) {
       _log.i('libmpv lacks the audio filters $_missingFilters');
     }
   }();
+
+  /// Like [_probeFilters], for the filters a semitone shift prefers. Probed
+  /// apart, once a shift is first asked for.
+  Future<void> _probeTempoFilters() => _tempoProbe ??= () async {
+    final missing = <String>{};
+    for (final name in MpvTempo.optionalFilters) {
+      if (await _engine.setProperty('af', '@mornye_probe:lavfi-$name') < 0) {
+        missing.add(name);
+      }
+    }
+    await _engine.setProperty('af', '');
+    _appliedSpec = '';
+    _missingFilters.addAll(missing);
+    if (missing.isNotEmpty) {
+      _log.i('libmpv lacks $missing; pitch shifts use scaletempo');
+    }
+  }();
+
+  MpvTempo _tempoFor(PlaybackPitch pitch) => MpvTempo.of(
+    _rate * playbackSpeed.value,
+    pitch,
+    unavailable: _missingFilters,
+  );
+
+  Future<void> _applyTempo(MpvTempo tempo) async {
+    if (tempo.pitchCorrection != _pitchCorrection) {
+      _pitchCorrection = tempo.pitchCorrection;
+      await _engine.setProperty(
+        'audio-pitch-correction',
+        tempo.pitchCorrection ? 'yes' : 'no',
+      );
+    }
+    if (tempo.speed != _speed) {
+      _speed = tempo.speed;
+      await _engine.setSpeed(tempo.speed);
+    }
+  }
+
+  void _setPitchFailed(bool failed) {
+    if (failed == _pitchFailed) return;
+    _pitchFailed = failed;
+    notifyPlaybackTempoSupportChanged();
+  }
 
   // Features the listener turned on that this libmpv cannot apply.
   String? _missingFeatures(EqualizerSettings settings) {
@@ -769,20 +854,52 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
     await _engine.setVolume(_mpvVolume);
   }
 
+  /// Sets the filter chain, the speed and the pitch correction for the
+  /// current equalizer, [playbackSpeed] and [playbackPitch].
   Future<void> _syncEqualizer() async {
     if (_disposed) return;
     final settings = playbackEqualizer.value;
+    final pitch = playbackPitch.value;
     try {
       if (settings.enabled) await _probeFilters();
+      if (pitch.semitones != 0) await _probeTempoFilters();
       if (_disposed) return;
-      final chain = _chainFor(settings);
+      final equalizer = _chainFor(settings);
+      // The speed with the pitch following it or kept, without a shift.
+      final unshifted = _tempoFor(
+        PlaybackPitch(followsRate: pitch.followsRate),
+      );
+      var tempo = _tempoFor(pitch);
+      var chain = equalizer.withTempo(tempo);
+      var pitchFailed = false;
+      if (pitch.semitones != 0 && chain.spec == _rejectedSpec) {
+        pitchFailed = true;
+        tempo = unshifted;
+        chain = equalizer.withTempo(tempo);
+      }
       // mpv keeps filters whose settings did not change and recreates the
       // graph, which also applies changes during playback.
       if (chain.spec != _appliedSpec) {
-        final code = await _engine.setProperty('af', chain.spec);
+        var code = await _engine.setProperty('af', chain.spec);
         if (_disposed) return;
+        if (code < 0 && pitch.semitones != 0 && !pitchFailed) {
+          // The equalizer may still work without the shift.
+          _log.w('Pitch shift unavailable (mpv error $code)');
+          _rejectedSpec = chain.spec;
+          pitchFailed = true;
+          tempo = unshifted;
+          chain = equalizer.withTempo(tempo);
+          code = chain.spec == _appliedSpec
+              ? 0
+              : await _engine.setProperty('af', chain.spec);
+          if (_disposed) return;
+        }
         if (code < 0) {
           _appliedSpec = null;
+          _setPitchFailed(pitch.semitones != 0);
+          // A scaletempo speed without its filter would play at the wrong
+          // tempo; the unshifted speed keeps the effective speed.
+          await _applyTempo(unshifted);
           reportEqualizerError(
             playerId,
             settings.enabled
@@ -793,6 +910,8 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
         }
         _appliedSpec = chain.spec;
       }
+      _setPitchFailed(pitchFailed);
+      await _applyTempo(tempo);
       await _applyChainGain(chain);
       reportEqualizerError(playerId, _missingFeatures(settings));
     } catch (error) {
@@ -810,6 +929,8 @@ class MediaKitPlaybackDeck implements PlaybackDeck, QueuedPlaybackDeck {
   Future<void> dispose() async {
     if (_disposed) return;
     playbackEqualizer.removeListener(_equalizerChanged);
+    playbackSpeed.removeListener(_equalizerChanged);
+    playbackPitch.removeListener(_equalizerChanged);
     playbackOutputVolume.removeListener(_outputVolumeChanged);
     playbackExclusiveOutput.removeListener(_exclusiveChanged);
     playbackExclusiveDevice.removeListener(_exclusiveChanged);
